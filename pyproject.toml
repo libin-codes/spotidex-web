@@ -7,8 +7,10 @@ requires-python = ">=3.14"
 dependencies = [
     "fastapi-cli>=0.0.28",
     "fastapi[standard]>=0.103.2",
+    "mutagen>=1.48.1",
     "pydantic>=2.13.4",
     "python-dotenv>=1.2.2",
+    "requests>=2.34.2",
     "spotdl>=4.5.0",
 ]
 
