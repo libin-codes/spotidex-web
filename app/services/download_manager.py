@@ -1,5 +1,7 @@
 import asyncio
 import os
+from collections.abc import Callable
+from typing import cast
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -84,10 +86,24 @@ class DownloadManager:
             async with semaphore:
                 progress = job.tracks[i]
                 progress.status = TrackDownloadStatus.DOWNLOADING
+                progress.percent = 0.0
                 self._notify(job_id)
+
+                last_notified_pct = 0.0
+
+                def on_progress(pct: float) -> None:
+                    nonlocal last_notified_pct
+                    progress.percent = pct
+                
+                    last_notified_pct = pct
+                    self._notify(job_id)
+
                 try:
-                    await asyncio.to_thread(self._download_track, track, job_dir)
+                    await asyncio.to_thread(
+                        self._download_track, track, job_dir, on_progress
+                    )
                     progress.status = TrackDownloadStatus.COMPLETED
+                    progress.percent = 100.0
                     job.completed += 1
                 except Exception as e:
                     progress.status = TrackDownloadStatus.FAILED
@@ -109,9 +125,21 @@ class DownloadManager:
         if queue is not None:
             queue.put_nowait(None)
 
-    def _download_track(self, track: TrackModel, job_dir: str) -> None:
+    def _download_track(
+        self, track: TrackModel, job_dir: str, on_progress: Callable[[float], None]
+    ) -> None:
         url = f"https://www.youtube.com/watch?v={track.youtube_id}"
         outtmpl = os.path.join(job_dir, "%(title)s.%(ext)s")
+
+        def progress_hook(d: dict[str, object]) -> None:
+            if d.get("status") == "downloading":
+                downloaded = float(cast("int | float", d.get("downloaded_bytes", 0)))
+                total_raw = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+                total = float(cast("int | float", total_raw))
+                if total > 0:
+                    on_progress(downloaded / total * 100)
+            elif d.get("status") == "finished":
+                on_progress(100.0)
 
         ydl_opts: dict = {
             "format": "bestaudio/best",
@@ -125,6 +153,7 @@ class DownloadManager:
             "outtmpl": outtmpl,
             "quiet": True,
             "no_warnings": True,
+            "progress_hooks": [progress_hook],
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore[reportArgumentType]

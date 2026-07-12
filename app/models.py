@@ -44,6 +44,7 @@ class TrackDownloadProgress(BaseModel):
     name: str
     artists: List[str]
     status: TrackDownloadStatus = TrackDownloadStatus.PENDING
+    percent: float = 0.0
     error: str | None = None
 
 
