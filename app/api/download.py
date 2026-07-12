@@ -60,7 +60,7 @@ async def download_status(websocket: WebSocket, job_id: str) -> None:
             update = await queue.get()
             if update is None:
                 break
-            await websocket.send_json(update.model_dump())
+            await websocket.send_json(update)
         await websocket.close()
     except WebSocketDisconnect:
         pass

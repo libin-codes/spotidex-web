@@ -18,12 +18,13 @@ from app.models import (
 )
 
 DOWNLOADS_DIR = "downloads"
+MAX_CONCURRENT = 5
 
 
 class DownloadManager:
     _instance: "DownloadManager | None" = None
     _jobs: dict[str, DownloadJob]
-    _queues: dict[str, asyncio.Queue[DownloadJob | None]]
+    _queues: dict[str, asyncio.Queue[dict[str, object] | None]]
 
     def __new__(cls) -> "DownloadManager":
         if cls._instance is None:
@@ -58,7 +59,7 @@ class DownloadManager:
     def get_job(self, job_id: str) -> DownloadJob | None:
         return self._jobs.get(job_id)
 
-    def get_queue(self, job_id: str) -> asyncio.Queue[DownloadJob | None] | None:
+    def get_queue(self, job_id: str) -> asyncio.Queue[dict[str, object] | None] | None:
         return self._queues.get(job_id)
 
     def start_download(
@@ -69,7 +70,7 @@ class DownloadManager:
     def _notify(self, job_id: str) -> None:
         queue = self._queues.get(job_id)
         if queue is not None:
-            queue.put_nowait(self._jobs[job_id])
+            queue.put_nowait(self._jobs[job_id].model_dump())
 
     async def _run_download(self, job_id: str, tracks: list[TrackModel]) -> None:
         job = self._jobs[job_id]
@@ -77,21 +78,24 @@ class DownloadManager:
         job_dir = os.path.join(DOWNLOADS_DIR, job_id)
         self._notify(job_id)
 
-        for i, track in enumerate(tracks):
-            progress = job.tracks[i]
-            progress.status = TrackDownloadStatus.DOWNLOADING
-            self._notify(job_id)
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
-            try:
-                await asyncio.to_thread(self._download_track, track, job_dir)
-                progress.status = TrackDownloadStatus.COMPLETED
-                job.completed += 1
-            except Exception as e:
-                progress.status = TrackDownloadStatus.FAILED
-                progress.error = str(e)
-                job.failed += 1
+        async def download_one(i: int, track: TrackModel) -> None:
+            async with semaphore:
+                progress = job.tracks[i]
+                progress.status = TrackDownloadStatus.DOWNLOADING
+                self._notify(job_id)
+                try:
+                    await asyncio.to_thread(self._download_track, track, job_dir)
+                    progress.status = TrackDownloadStatus.COMPLETED
+                    job.completed += 1
+                except Exception as e:
+                    progress.status = TrackDownloadStatus.FAILED
+                    progress.error = str(e)
+                    job.failed += 1
+                self._notify(job_id)
 
-            self._notify(job_id)
+        await asyncio.gather(*[download_one(i, t) for i, t in enumerate(tracks)])
 
         if job.completed == job.total:
             job.status = DownloadStatus.COMPLETED
