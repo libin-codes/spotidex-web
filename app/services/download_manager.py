@@ -23,11 +23,13 @@ DOWNLOADS_DIR = "downloads"
 class DownloadManager:
     _instance: "DownloadManager | None" = None
     _jobs: dict[str, DownloadJob]
+    _queues: dict[str, asyncio.Queue[DownloadJob | None]]
 
     def __new__(cls) -> "DownloadManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._jobs = {}
+            cls._instance._queues = {}
         return cls._instance
 
     def create_job(self, type: DownloadJobType, tracks: list[TrackModel]) -> str:
@@ -50,24 +52,35 @@ class DownloadManager:
             created_at=datetime.now(timezone.utc).isoformat(),
         )
         self._jobs[job_id] = job
+        self._queues[job_id] = asyncio.Queue()
         return job_id
 
     def get_job(self, job_id: str) -> DownloadJob | None:
         return self._jobs.get(job_id)
+
+    def get_queue(self, job_id: str) -> asyncio.Queue[DownloadJob | None] | None:
+        return self._queues.get(job_id)
 
     def start_download(
         self, job_id: str, tracks: list[TrackModel]
     ) -> asyncio.Task[None]:
         return asyncio.create_task(self._run_download(job_id, tracks))
 
+    def _notify(self, job_id: str) -> None:
+        queue = self._queues.get(job_id)
+        if queue is not None:
+            queue.put_nowait(self._jobs[job_id])
+
     async def _run_download(self, job_id: str, tracks: list[TrackModel]) -> None:
         job = self._jobs[job_id]
         job.status = DownloadStatus.DOWNLOADING
         job_dir = os.path.join(DOWNLOADS_DIR, job_id)
+        self._notify(job_id)
 
         for i, track in enumerate(tracks):
             progress = job.tracks[i]
             progress.status = TrackDownloadStatus.DOWNLOADING
+            self._notify(job_id)
 
             try:
                 await asyncio.to_thread(self._download_track, track, job_dir)
@@ -78,12 +91,19 @@ class DownloadManager:
                 progress.error = str(e)
                 job.failed += 1
 
+            self._notify(job_id)
+
         if job.completed == job.total:
             job.status = DownloadStatus.COMPLETED
         elif job.failed == job.total:
             job.status = DownloadStatus.FAILED
         else:
             job.status = DownloadStatus.COMPLETED
+
+        self._notify(job_id)
+        queue = self._queues.get(job_id)
+        if queue is not None:
+            queue.put_nowait(None)
 
     def _download_track(self, track: TrackModel, job_dir: str) -> None:
         url = f"https://www.youtube.com/watch?v={track.youtube_id}"

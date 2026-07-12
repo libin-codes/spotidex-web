@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 
 from fastapi import APIRouter
 
@@ -6,6 +7,8 @@ from app.models import TrackModel, PlaylistModel, AlbumModel
 from app.services.SpotidexClient import SpotidexClient
 
 router = APIRouter(tags=["spotify"])
+
+load_dotenv()
 
 client_id = os.getenv("CLIENT_ID", "")
 client_secret = os.getenv("CLIENT_SECRET", "")
