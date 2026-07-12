@@ -21,6 +21,7 @@ from app.models import (
 
 DOWNLOADS_DIR = "downloads"
 MAX_CONCURRENT = 5
+MAX_RETRIES = 3
 
 
 class DownloadManager:
@@ -85,30 +86,36 @@ class DownloadManager:
         async def download_one(i: int, track: TrackModel) -> None:
             async with semaphore:
                 progress = job.tracks[i]
-                progress.status = TrackDownloadStatus.DOWNLOADING
-                progress.percent = 0.0
-                self._notify(job_id)
-
                 last_notified_pct = 0.0
 
                 def on_progress(pct: float) -> None:
                     nonlocal last_notified_pct
                     progress.percent = pct
-                
                     last_notified_pct = pct
                     self._notify(job_id)
 
-                try:
-                    await asyncio.to_thread(
-                        self._download_track, track, job_dir, on_progress
-                    )
-                    progress.status = TrackDownloadStatus.COMPLETED
-                    progress.percent = 100.0
-                    job.completed += 1
-                except Exception as e:
-                    progress.status = TrackDownloadStatus.FAILED
-                    progress.error = str(e)
-                    job.failed += 1
+                for attempt in range(MAX_RETRIES):
+                    progress.status = TrackDownloadStatus.DOWNLOADING
+                    progress.percent = 0.0
+                    last_notified_pct = 0.0
+                    progress.error = None
+                    self._notify(job_id)
+
+                    try:
+                        await asyncio.to_thread(
+                            self._download_track, track, job_dir, on_progress
+                        )
+                        progress.status = TrackDownloadStatus.COMPLETED
+                        progress.percent = 100.0
+                        job.completed += 1
+                        self._notify(job_id)
+                        return
+                    except Exception as e:
+                        progress.error = str(e)
+                        self._cleanup_partial(job_dir)
+
+                progress.status = TrackDownloadStatus.FAILED
+                job.failed += 1
                 self._notify(job_id)
 
         await asyncio.gather(*[download_one(i, t) for i, t in enumerate(tracks)])
@@ -170,6 +177,11 @@ class DownloadManager:
             if f.endswith(".mp3"):
                 return os.path.join(job_dir, f)
         return None
+
+    def _cleanup_partial(self, job_dir: str) -> None:
+        for f in os.listdir(job_dir):
+            if f.endswith(".part") or f.endswith(".temp"):
+                os.remove(os.path.join(job_dir, f))
 
     def _embed_metadata(self, mp3_path: str, track: TrackModel) -> None:
         audio = MP3(mp3_path, ID3=ID3)
