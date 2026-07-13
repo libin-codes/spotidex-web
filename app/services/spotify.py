@@ -4,14 +4,13 @@ from ytmusicapi import YTMusic
 from app.models import TrackModel, PlaylistModel, AlbumModel
 
 
-class SpotidexClient:
+class SpotifyService:
     """
-    Spotify client for Fetching and downloading tracks/playlist and albums.
+    Service for fetching Spotify data and resolving YouTube Music IDs.
 
     Supports:
     - Fetching track/album/playlist data
-    - Resolving YouTube Music IDs for each track
-    - Downloading Songs with progress tracking
+    - Resolving YouTube Music IDs and durations for each track
     """
 
     def __init__(self, client_id: str, client_secret: str):
@@ -29,8 +28,6 @@ class SpotidexClient:
             album_name=track["album"]["name"],
             year=track["album"]["release_date"][:4],
         )
-
-
 
     async def _resolve_youtube_data(self, track_name: str, artists: list[str]) -> tuple[str, int]:
         query = f"{track_name} {artists[0]}"
@@ -60,7 +57,7 @@ class SpotidexClient:
         if not track:
             raise ValueError(f"Track not found: {track_id}")
         built = self._build_track(track)
-        built.youtube_id,built.duration_seconds = await self._resolve_youtube_data(built.name, built.artists)
+        built.youtube_id, built.duration_seconds = await self._resolve_youtube_data(built.name, built.artists)
         return built
 
     async def get_playlist(self, playlist_id: str) -> PlaylistModel:
