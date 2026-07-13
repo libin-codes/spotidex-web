@@ -1,9 +1,4 @@
-import io
-import re
-import zipfile
-from pathlib import Path
-
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, StreamingResponse
 from starlette.background import BackgroundTask
 
@@ -12,7 +7,6 @@ from app.models import (
     AlbumModel,
     DownloadJobType,
     DownloadResponse,
-    DownloadStatus,
     PlaylistModel,
     TrackModel,
 )
@@ -69,44 +63,20 @@ async def download_status(websocket: WebSocket, job_id: str) -> None:
 
 @router.get("/{job_id}/file", response_model=None)
 async def download_file(job_id: str) -> FileResponse | StreamingResponse:
-    job = manager.get_job(job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    if job.status != DownloadStatus.COMPLETED:
-        raise HTTPException(status_code=409, detail="Download not completed")
-
-    job_dir = manager.get_job_dir(job_id)
-    if job_dir is None:
-        raise HTTPException(status_code=410, detail="Download expired")
-
-    manager.cancel_cleanup_timer(job_id)
-
-    mp3_files = list(Path(job_dir).glob("*.mp3"))
-
-    if not mp3_files:
-        raise HTTPException(status_code=410, detail="Download expired")
+    job, mp3_files = manager.prepare_file_serve(job_id)
 
     if job.type == DownloadJobType.TRACK:
-        filename = mp3_files[0].name
         return FileResponse(
             path=str(mp3_files[0]),
             media_type="audio/mpeg",
-            filename=filename,
-            background=BackgroundTask(manager._remove_job_dir, job_id),
+            filename=mp3_files[0].name,
+            background=BackgroundTask(manager.remove_job_dir, job_id),
         )
 
-    safe_name = re.sub(r'[^\w\- ]', '', job.name).strip() or job.name
-    zip_name = f"{safe_name}.zip"
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for f in mp3_files:
-            zf.write(f, f.name)
-    buf.seek(0)
-
+    buf, zip_name = manager.build_zip(job_id)
     return StreamingResponse(
         iter([buf.getvalue()]),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{zip_name}"'},
-        background=BackgroundTask(manager._remove_job_dir, job_id),
+        background=BackgroundTask(manager.remove_job_dir, job_id),
     )
