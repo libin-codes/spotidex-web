@@ -1,13 +1,13 @@
 import io
-import os
 import re
 import zipfile
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, StreamingResponse
+from starlette.background import BackgroundTask
 
-from app.services.download_manager import DOWNLOADS_DIR, DownloadManager
+from app.services.download_manager import DownloadManager
 from app.models import (
     AlbumModel,
     DownloadJobType,
@@ -76,11 +76,16 @@ async def download_file(job_id: str) -> FileResponse | StreamingResponse:
     if job.status != DownloadStatus.COMPLETED:
         raise HTTPException(status_code=409, detail="Download not completed")
 
-    job_dir = Path(DOWNLOADS_DIR) / job_id
-    mp3_files = list(job_dir.glob("*.mp3"))
+    job_dir = manager.get_job_dir(job_id)
+    if job_dir is None:
+        raise HTTPException(status_code=410, detail="Download expired")
+
+    manager.cancel_cleanup_timer(job_id)
+
+    mp3_files = list(Path(job_dir).glob("*.mp3"))
 
     if not mp3_files:
-        raise HTTPException(status_code=500, detail="No files found on disk")
+        raise HTTPException(status_code=410, detail="Download expired")
 
     if job.type == DownloadJobType.TRACK:
         filename = mp3_files[0].name
@@ -88,6 +93,7 @@ async def download_file(job_id: str) -> FileResponse | StreamingResponse:
             path=str(mp3_files[0]),
             media_type="audio/mpeg",
             filename=filename,
+            background=BackgroundTask(manager._remove_job_dir, job_id),
         )
 
     safe_name = re.sub(r'[^\w\- ]', '', job.name).strip() or job.name
@@ -102,4 +108,5 @@ async def download_file(job_id: str) -> FileResponse | StreamingResponse:
         iter([buf.getvalue()]),
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{zip_name}"'},
+        background=BackgroundTask(manager._remove_job_dir, job_id),
     )

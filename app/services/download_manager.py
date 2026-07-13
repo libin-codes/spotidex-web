@@ -1,6 +1,10 @@
 import asyncio
 import os
+import shutil
+import tempfile
+import time
 from collections.abc import Callable
+from pathlib import Path
 from typing import cast
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -21,27 +25,39 @@ from app.models import (
 
 from typing import Mapping, Any
 
-DOWNLOADS_DIR = "downloads"
 MAX_CONCURRENT = 5
 MAX_RETRIES = 3
+CLEANUP_DELAY = 300  # 5 minutes
 
 
 class DownloadManager:
     _instance: "DownloadManager | None" = None
     _jobs: dict[str, DownloadJob]
     _queues: dict[str, asyncio.Queue[dict[str, object] | None]]
+    _job_dirs: dict[str, str]
+    _cleanup_timers: dict[str, asyncio.Task[None]]
 
     def __new__(cls) -> "DownloadManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._jobs = {}
             cls._instance._queues = {}
+            cls._instance._job_dirs = {}
+            cls._instance._cleanup_timers = {}
+            cls._instance._cleanup_orphans()
         return cls._instance
+
+    def _cleanup_orphans(self) -> None:
+        tmp = Path(tempfile.gettempdir())
+        now = time.time()
+        for d in tmp.glob("spotidex_*"):
+            if d.is_dir() and (now - d.stat().st_mtime) > CLEANUP_DELAY:
+                shutil.rmtree(d, ignore_errors=True)
 
     def create_job(self, name: str, type: DownloadJobType, tracks: list[TrackModel]) -> str:
         job_id = str(uuid4())
-        job_dir = os.path.join(DOWNLOADS_DIR, job_id)
-        os.makedirs(job_dir, exist_ok=True)
+        job_dir = tempfile.mkdtemp(prefix="spotidex_")
+        self._job_dirs[job_id] = job_dir
 
         job = DownloadJob(
             job_id=job_id,
@@ -66,6 +82,9 @@ class DownloadManager:
     def get_job(self, job_id: str) -> DownloadJob | None:
         return self._jobs.get(job_id)
 
+    def get_job_dir(self, job_id: str) -> str | None:
+        return self._job_dirs.get(job_id)
+
     def get_queue(self, job_id: str) -> asyncio.Queue[dict[str, object] | None] | None:
         return self._queues.get(job_id)
 
@@ -73,6 +92,21 @@ class DownloadManager:
         self, job_id: str, tracks: list[TrackModel]
     ) -> asyncio.Task[None]:
         return asyncio.create_task(self._run_download(job_id, tracks))
+
+    def cancel_cleanup_timer(self, job_id: str) -> None:
+        timer = self._cleanup_timers.pop(job_id, None)
+        if timer is not None:
+            timer.cancel()
+
+    def _remove_job_dir(self, job_id: str) -> None:
+        job_dir = self._job_dirs.pop(job_id, None)
+        if job_dir:
+            shutil.rmtree(job_dir, ignore_errors=True)
+
+    async def _schedule_cleanup(self, job_id: str) -> None:
+        await asyncio.sleep(CLEANUP_DELAY)
+        self._remove_job_dir(job_id)
+        self._cleanup_timers.pop(job_id, None)
 
     def _notify(self, job_id: str) -> None:
         queue = self._queues.get(job_id)
@@ -82,7 +116,7 @@ class DownloadManager:
     async def _run_download(self, job_id: str, tracks: list[TrackModel]) -> None:
         job = self._jobs[job_id]
         job.status = DownloadStatus.DOWNLOADING
-        job_dir = os.path.join(DOWNLOADS_DIR, job_id)
+        job_dir = self._job_dirs[job_id]
         self._notify(job_id)
 
         semaphore = asyncio.Semaphore(MAX_CONCURRENT)
@@ -130,6 +164,8 @@ class DownloadManager:
         queue = self._queues.get(job_id)
         if queue is not None:
             queue.put_nowait(None)
+
+        self._cleanup_timers[job_id] = asyncio.create_task(self._schedule_cleanup(job_id))
 
     def _download_track(
         self, track: TrackModel, job_dir: str, on_progress: Callable[[float], None]
