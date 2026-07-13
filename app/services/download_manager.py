@@ -19,6 +19,8 @@ from app.models import (
     TrackModel,
 )
 
+from typing import Mapping, Any
+
 DOWNLOADS_DIR = "downloads"
 MAX_CONCURRENT = 5
 MAX_RETRIES = 3
@@ -36,13 +38,14 @@ class DownloadManager:
             cls._instance._queues = {}
         return cls._instance
 
-    def create_job(self, type: DownloadJobType, tracks: list[TrackModel]) -> str:
+    def create_job(self, name: str, type: DownloadJobType, tracks: list[TrackModel]) -> str:
         job_id = str(uuid4())
         job_dir = os.path.join(DOWNLOADS_DIR, job_id)
         os.makedirs(job_dir, exist_ok=True)
 
         job = DownloadJob(
             job_id=job_id,
+            name=name,
             type=type,
             total=len(tracks),
             tracks=[
@@ -50,6 +53,7 @@ class DownloadManager:
                     spotify_id=t.spotify_id,
                     name=t.name,
                     artists=t.artists,
+                    duration_seconds=t.duration_seconds,
                 )
                 for t in tracks
             ],
@@ -86,18 +90,14 @@ class DownloadManager:
         async def download_one(i: int, track: TrackModel) -> None:
             async with semaphore:
                 progress = job.tracks[i]
-                last_notified_pct = 0.0
 
                 def on_progress(pct: float) -> None:
-                    nonlocal last_notified_pct
                     progress.percent = pct
-                    last_notified_pct = pct
                     self._notify(job_id)
 
                 for attempt in range(MAX_RETRIES):
                     progress.status = TrackDownloadStatus.DOWNLOADING
                     progress.percent = 0.0
-                    last_notified_pct = 0.0
                     progress.error = None
                     self._notify(job_id)
 
@@ -112,7 +112,6 @@ class DownloadManager:
                         return
                     except Exception as e:
                         progress.error = str(e)
-                        self._cleanup_partial(job_dir)
 
                 progress.status = TrackDownloadStatus.FAILED
                 job.failed += 1
@@ -136,52 +135,43 @@ class DownloadManager:
         self, track: TrackModel, job_dir: str, on_progress: Callable[[float], None]
     ) -> None:
         url = f"https://www.youtube.com/watch?v={track.youtube_id}"
-        outtmpl = os.path.join(job_dir, "%(title)s.%(ext)s")
+        filepath = os.path.join(job_dir, f"{track.name} - {track.artists[0]}")
 
-        def progress_hook(d: dict[str, object]) -> None:
+        def progress_hook(d: Mapping[str, Any]) -> None:
             if d.get("status") == "downloading":
                 downloaded = float(cast("int | float", d.get("downloaded_bytes", 0)))
                 total_raw = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
                 total = float(cast("int | float", total_raw))
                 if total > 0:
-                    on_progress(downloaded / total * 100)
+                    on_progress(downloaded / total * 97)
             elif d.get("status") == "finished":
-                on_progress(100.0)
+                on_progress(97.0)
 
-        ydl_opts: dict = {
+        ydl_opts = {
+
             "format": "bestaudio/best",
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": "mp3",
                     "preferredquality": "320",
-                },
+                },   
             ],
-            "outtmpl": outtmpl,
+            "outtmpl": filepath,
             "quiet": True,
             "no_warnings": True,
             "progress_hooks": [progress_hook],
         }
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore[reportArgumentType]
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:   # pyright: ignore[reportArgumentType]
             ydl.download([url])
 
-        mp3_path = self._find_downloaded_file(job_dir)
-        if mp3_path is None:
-            raise RuntimeError("Download completed but MP3 file not found")
+
+        mp3_path = filepath + ".mp3"
+
 
         self._embed_metadata(mp3_path, track)
 
-    def _find_downloaded_file(self, job_dir: str) -> str | None:
-        for f in os.listdir(job_dir):
-            if f.endswith(".mp3"):
-                return os.path.join(job_dir, f)
-        return None
-
-    def _cleanup_partial(self, job_dir: str) -> None:
-        for f in os.listdir(job_dir):
-            if f.endswith(".part") or f.endswith(".temp"):
-                os.remove(os.path.join(job_dir, f))
 
     def _embed_metadata(self, mp3_path: str, track: TrackModel) -> None:
         audio = MP3(mp3_path, ID3=ID3)
@@ -193,7 +183,7 @@ class DownloadManager:
         assert tags is not None
 
         tags.add(TIT2(encoding=3, text=[track.name]))
-        tags.add(TPE1(encoding=3, text=[" & ".join(track.artists)]))
+        tags.add(TPE1(encoding=3, text=[", ".join(track.artists)]))
         tags.add(TALB(encoding=3, text=[track.album_name]))
         tags.add(TDRC(encoding=3, text=[track.year]))
 

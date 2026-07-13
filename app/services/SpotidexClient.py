@@ -30,22 +30,25 @@ class SpotidexClient:
             year=track["album"]["release_date"][:4],
         )
 
-    async def _resolve_youtube_id(self, track_name: str, artists: list[str]) -> str:
+
+
+    async def _resolve_youtube_data(self, track_name: str, artists: list[str]) -> tuple[str, int]:
         query = f"{track_name} {artists[0]}"
         results = await asyncio.to_thread(
             self.ytmusic.search, query, filter="songs", limit=1
         )
-        if results and "videoId" in results[0]:
-            return results[0]["videoId"]
-        return ""
+        if results:
+            video_id = results[0]["videoId"]
+            duration = results[0]["duration_seconds"]
+            return video_id, duration
+        raise
 
     async def _resolve_tracks_youtube_ids(self, tracks: list[TrackModel]) -> list[TrackModel]:
         async def resolve_one(track: TrackModel) -> TrackModel:
             async with self._yt_semaphore:
-                youtube_id = await self._resolve_youtube_id(track.name, track.artists)
-                return track.model_copy(update={"youtube_id": youtube_id})
-                
-        
+                video_id, duration = await self._resolve_youtube_data(track.name, track.artists)
+                return track.model_copy(update={"youtube_id": video_id, "duration_seconds": duration})
+
         async with asyncio.TaskGroup() as tg:
             tasks = [tg.create_task(resolve_one(t)) for t in tracks]
 
@@ -56,7 +59,7 @@ class SpotidexClient:
         if not track:
             raise ValueError(f"Track not found: {track_id}")
         built = self._build_track(track)
-        built.youtube_id = await self._resolve_youtube_id(built.name, built.artists)
+        built.youtube_id,built.duration_seconds = await self._resolve_youtube_data(built.name, built.artists)
         return built
 
     async def get_playlist(self, playlist_id: str) -> PlaylistModel:
@@ -72,6 +75,7 @@ class SpotidexClient:
             creator=playlist["owner"]["display_name"],
         )
         model.tracks = await self._resolve_tracks_youtube_ids(model.tracks)
+        model.duration_seconds = sum(t.duration_seconds for t in model.tracks)
         return model
 
     async def get_album(self, album_id: str) -> AlbumModel:
@@ -87,4 +91,5 @@ class SpotidexClient:
             artists=[artist["name"] for artist in album["artists"]],
         )
         model.tracks = await self._resolve_tracks_youtube_ids(model.tracks)
+        model.duration_seconds = sum(t.duration_seconds for t in model.tracks)
         return model

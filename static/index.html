@@ -31,6 +31,7 @@
         .track-item:last-child { border-bottom: none; }
         .track-name { flex: 1; }
         .track-artists { color: #888; font-size: 0.8rem; margin-left: 0.5rem; }
+        .track-duration { color: #666; font-size: 0.8rem; margin-left: 0.5rem; white-space: nowrap; }
         .track-status { font-size: 0.75rem; padding: 0.15rem 0.4rem; border-radius: 3px; }
         .track-status.pending { background: #333; color: #aaa; }
         .track-status.downloading { background: #b8860b; color: #fff; }
@@ -81,6 +82,15 @@
     <script>
         const API = window.location.origin;
         let currentJobId = null;
+
+        function formatDuration(seconds) {
+            if (!seconds) return '';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            return `${m}:${String(s).padStart(2, '0')}`;
+        }
 
         function parseSpotifyInput(input) {
             input = input.trim();
@@ -204,7 +214,12 @@
             const pct = job.total > 0 ? Math.round(totalPercent / job.total) : 0;
             document.getElementById('progress-fill').style.width = `${pct}%`;
             document.getElementById('job-count').textContent =
-                `${job.completed}/${job.total} completed` + (job.failed > 0 ? ` \u00b7 ${job.failed} failed` : '');
+                `${job.completed}/${job.total} completed` + (job.failed > 0 ? ` · ${job.failed} failed` : '');
+
+            const totalDuration = job.tracks.reduce((sum, t) => sum + (t.duration_seconds || 0), 0);
+            if (totalDuration > 0) {
+                document.getElementById('job-count').textContent += ` · ${formatDuration(totalDuration)}`;
+            }
 
             const list = document.getElementById('track-list');
             list.innerHTML = '';
@@ -218,6 +233,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="track-name">${t.name}</span>
                         <span class="track-artists">${t.artists.join(', ')}</span>
+                        ${t.duration_seconds ? `<span class="track-duration">${formatDuration(t.duration_seconds)}</span>` : ''}
                         <span class="track-status ${t.status}">${t.status}${pctText}</span>
                     </div>
                     ${t.status === 'downloading' ? `<div class="track-progress"><div class="track-progress-fill" style="width: ${t.percent || 0}%"></div></div>` : ''}

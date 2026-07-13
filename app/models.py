@@ -12,6 +12,7 @@ class TrackModel(BaseModel):
     album_name: str
     year: str
     youtube_id: str = ""
+    duration_seconds: int = 0
 
 
 class PlaylistModel(BaseModel):
@@ -21,6 +22,7 @@ class PlaylistModel(BaseModel):
     creator: str
     length: int
     tracks: List[TrackModel]
+    duration_seconds: int = 0
 
 
 class AlbumModel(BaseModel):
@@ -30,6 +32,7 @@ class AlbumModel(BaseModel):
     artists: List[str]
     length: int
     tracks: List[TrackModel]
+    duration_seconds: int = 0
 
 
 class TrackDownloadStatus(str, Enum):
@@ -46,6 +49,7 @@ class TrackDownloadProgress(BaseModel):
     status: TrackDownloadStatus = TrackDownloadStatus.PENDING
     percent: float = 0.0
     error: str | None = None
+    duration_seconds: int = 0
 
 
 class DownloadJobType(str, Enum):
@@ -63,6 +67,7 @@ class DownloadStatus(str, Enum):
 
 class DownloadJob(BaseModel):
     job_id: str
+    name: str
     type: DownloadJobType
     status: DownloadStatus = DownloadStatus.PENDING
     total: int

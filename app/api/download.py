@@ -1,5 +1,6 @@
 import io
 import os
+import re
 import zipfile
 from pathlib import Path
 
@@ -22,21 +23,21 @@ manager = DownloadManager()
 
 @router.post("/track", response_model=DownloadResponse)
 async def download_track(track: TrackModel) -> DownloadResponse:
-    job_id = manager.create_job(DownloadJobType.TRACK, [track])
+    job_id = manager.create_job(track.name, DownloadJobType.TRACK, [track])
     manager.start_download(job_id, [track])
     return DownloadResponse(job_id=job_id)
 
 
 @router.post("/playlist", response_model=DownloadResponse)
 async def download_playlist(playlist: PlaylistModel) -> DownloadResponse:
-    job_id = manager.create_job(DownloadJobType.PLAYLIST, playlist.tracks)
+    job_id = manager.create_job(playlist.name, DownloadJobType.PLAYLIST, playlist.tracks)
     manager.start_download(job_id, playlist.tracks)
     return DownloadResponse(job_id=job_id)
 
 
 @router.post("/album", response_model=DownloadResponse)
 async def download_album(album: AlbumModel) -> DownloadResponse:
-    job_id = manager.create_job(DownloadJobType.ALBUM, album.tracks)
+    job_id = manager.create_job(album.name, DownloadJobType.ALBUM, album.tracks)
     manager.start_download(job_id, album.tracks)
     return DownloadResponse(job_id=job_id)
 
@@ -66,7 +67,7 @@ async def download_status(websocket: WebSocket, job_id: str) -> None:
         pass
 
 
-@router.get("/{job_id}/file",response_model=None)
+@router.get("/{job_id}/file", response_model=None)
 async def download_file(job_id: str) -> FileResponse | StreamingResponse:
     job = manager.get_job(job_id)
     if job is None:
@@ -82,19 +83,21 @@ async def download_file(job_id: str) -> FileResponse | StreamingResponse:
         raise HTTPException(status_code=500, detail="No files found on disk")
 
     if job.type == DownloadJobType.TRACK:
+        filename = mp3_files[0].name
         return FileResponse(
             path=str(mp3_files[0]),
             media_type="audio/mpeg",
-            filename=mp3_files[0].name,
+            filename=filename,
         )
 
+    safe_name = re.sub(r'[^\w\- ]', '', job.name).strip() or job.name
+    zip_name = f"{safe_name}.zip"
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for f in mp3_files:
             zf.write(f, f.name)
     buf.seek(0)
 
-    zip_name = f"{job.type.value}_{job_id[:8]}.zip"
     return StreamingResponse(
         iter([buf.getvalue()]),
         media_type="application/zip",
