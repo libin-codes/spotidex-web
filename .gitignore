@@ -40,3 +40,11 @@ Thumbs.db
 .mypy_cache/
 .pyright/
 .ruff_cache/
+
+# Frontend
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+.env.local
