@@ -8,6 +8,7 @@ import TrackSelectionList from "./TrackSelectionList";
 import type { Track } from "./types";
 import TracksDownloadHeader from "./TracksDownloadHeader";
 import TracksDownloadFooter from "./TracksDownloadFooter";
+import type { DownloadStatus } from "@/components/DownloadButton";
 
 export type TrackItem = {
   id: string;
@@ -24,6 +25,7 @@ type TrackListCardProps = {
   items: Track[];
   onDownloadClick?: (selectedIds: string[]) => void;
   onSettingsClick?: () => void;
+  downloadStatus?: DownloadStatus;
 };
 
 export function TrackListCard({
@@ -31,6 +33,7 @@ export function TrackListCard({
   title = "Playlist Name",
   subtitle = "Creator Name",
   items,
+  downloadStatus,
 }: TrackListCardProps) {
   return (
     <Card className="w-full" size="sm">
@@ -42,7 +45,7 @@ export function TrackListCard({
       <Separator />
       <TrackSelectionList tracks={items} />
       <Separator />
-      <TracksDownloadFooter />
+      <TracksDownloadFooter downloadStatus={downloadStatus} />
     </Card>
   );
 }

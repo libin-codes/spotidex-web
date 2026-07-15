@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DownloadButton, type DownloadStatus } from "@/components/DownloadButton";
 import { Calendar, DiscAlbum, Settings } from "lucide-react";
 
 type TrackCardProps = {
@@ -18,6 +19,7 @@ type TrackCardProps = {
   year: number | string;
   onDownloadClick: () => void;
   onSettingsClick: () => void;
+  downloadStatus?: DownloadStatus;
 };
 
 export function TrackCard({
@@ -28,6 +30,7 @@ export function TrackCard({
   year = 2018,
   onDownloadClick,
   onSettingsClick,
+  downloadStatus,
 }: TrackCardProps) {
   return (
     <Card className="max-w-sm p-4" size="sm">
@@ -61,9 +64,11 @@ export function TrackCard({
             <Settings />
           </Button>
         )}
-        <Button className="flex-1" size="lg" onClick={onDownloadClick}>
-          Download Track
-        </Button>
+        <DownloadButton
+          status={downloadStatus}
+          onClick={onDownloadClick}
+          className="flex-1"
+        />
       </CardFooter>
     </Card>
   );

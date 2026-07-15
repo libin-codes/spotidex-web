@@ -1,9 +1,11 @@
+import { useState, useRef, useCallback } from "react";
 import { TrackCard } from "./components/TrackDownloadCard/TrackCard";
 import { TrackListCard } from "./components/TracksDownloadCard/TracksDownloadCard";
 import { ThemeProvider } from "./contexts/theme-provider";
 import type { Track } from "./components/TracksDownloadCard/types";
 import { SearchBar } from "./components/SearchBar";
 import { Toaster } from "@/components/ui/sonner";
+import { DownloadButton, type DownloadStatus } from "./components/DownloadButton";
 
 const sampleTracks: Track[] = [
   {
@@ -44,10 +46,34 @@ const sampleTracks: Track[] = [
 ];
 
 function App() {
+  const [dlStatus, setDlStatus] = useState<DownloadStatus>({ status: "idle" });
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startDownload = useCallback(() => {
+    setDlStatus({ status: "downloading", progress: 0 });
+    let progress = 0;
+    intervalRef.current = setInterval(() => {
+      progress += Math.random() * 12 + 3;
+      if (progress >= 100) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setDlStatus({ status: "completed" });
+        setTimeout(() => setDlStatus({ status: "idle" }), 2000);
+      } else {
+        setDlStatus({ status: "downloading", progress: Math.round(progress) });
+      }
+    }, 300);
+  }, []);
+
+  const handleDownloadClick = useCallback(() => {
+    if (dlStatus.status === "idle" || dlStatus.status === "failed") startDownload();
+  }, [dlStatus, startDownload]);
+
   return (
     <ThemeProvider>
       <Toaster />
       <div className="flex flex-wrap items-start gap-4 p-4">
+        <DownloadButton status={dlStatus} onClick={handleDownloadClick} className="w-70" />
+
         <TrackCard
           image="https://i.scdn.co/image/ab67616d0000b2737359994525d219f64872d3b1"
           title="Cut To The Feeling"
