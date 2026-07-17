@@ -32,13 +32,13 @@ function App() {
       <div className="flex h-full flex-col">
         <AppHeader />
 
-        <div className="flex flex-col flex-1  items-center gap-2  p-4 h-full">
+        <div className="flex flex-1 justify-center items-center gap-2  p-4 h-full">
           {searchResult == null && <EmptyOutline />}
           {searchResult != null && searchResult.type === "track" && (
-            <>
-              <VoidOutline/>
+          
+           
               <TrackCard trackId={searchResult.id} />
-            </>
+        
           )}
         </div>
         <SearchBar
