@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { downloadTrack, downloadPlaylist, getDownloadFileUrl } from "@/api/client";
+import { downloadTrack, downloadPlaylist, downloadAlbum, getDownloadFileUrl } from "@/api/client";
 import { connectDownloadProgress } from "@/api/websocket";
-import type { TrackModel, PlaylistModel, DownloadJob } from "@/api/types";
+import type { TrackModel, PlaylistModel, AlbumModel, DownloadJob } from "@/api/types";
 import type { DownloadStatus } from "@/components/DownloadButton";
 
 export function useDownload() {
@@ -24,6 +24,17 @@ export function useDownload() {
 
   const playlistMutation = useMutation({
     mutationFn: downloadPlaylist,
+    onSuccess: (data) => {
+      setJobId(data.job_id);
+      setDownloadStatus({ status: "downloading", progress: 0 });
+    },
+    onError: () => {
+      setDownloadStatus({ status: "failed" });
+    },
+  });
+
+  const albumMutation = useMutation({
+    mutationFn: downloadAlbum,
     onSuccess: (data) => {
       setJobId(data.job_id);
       setDownloadStatus({ status: "downloading", progress: 0 });
@@ -62,18 +73,25 @@ export function useDownload() {
     [playlistMutation],
   );
 
+  const downloadAlbumTrack = useCallback(
+    (album: AlbumModel) => albumMutation.mutate(album),
+    [albumMutation],
+  );
+
   const reset = useCallback(() => {
     setJobId(null);
     setDownloadStatus({ status: "idle" });
     trackMutation.reset();
     playlistMutation.reset();
-  }, [trackMutation, playlistMutation]);
+    albumMutation.reset();
+  }, [trackMutation, playlistMutation, albumMutation]);
 
   return {
     downloadStatus,
     download,
     downloadPlaylist: downloadPlaylistTrack,
+    downloadAlbum: downloadAlbumTrack,
     reset,
-    isPending: trackMutation.isPending || playlistMutation.isPending,
+    isPending: trackMutation.isPending || playlistMutation.isPending || albumMutation.isPending,
   };
 }

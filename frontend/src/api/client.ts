@@ -1,4 +1,4 @@
-import type { TrackModel, PlaylistModel, DownloadResponse } from "./types";
+import type { TrackModel, PlaylistModel, AlbumModel, DownloadResponse } from "./types";
 
 const API_BASE = "/api";
 
@@ -35,6 +35,26 @@ export async function downloadPlaylist(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(playlist),
+  });
+  if (!res.ok) throw new Error(`Failed to start download: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchAlbum(
+  albumId: string,
+): Promise<AlbumModel> {
+  const res = await fetch(`${API_BASE}/album/${albumId}`);
+  if (!res.ok) throw new Error(`Failed to fetch album: ${res.statusText}`);
+  return res.json();
+}
+
+export async function downloadAlbum(
+  album: AlbumModel,
+): Promise<DownloadResponse> {
+  const res = await fetch(`${API_BASE}/download/album`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(album),
   });
   if (!res.ok) throw new Error(`Failed to start download: ${res.statusText}`);
   return res.json();

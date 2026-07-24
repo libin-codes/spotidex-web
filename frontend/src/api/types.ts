@@ -47,6 +47,16 @@ export type PlaylistModel = {
   duration_seconds: number;
 };
 
+export type AlbumModel = {
+  spotify_id: string;
+  name: string;
+  cover_url: string;
+  artists: string[];
+  length: number;
+  tracks: TrackModel[];
+  duration_seconds: number;
+};
+
 export type DownloadResponse = {
   job_id: string;
 };

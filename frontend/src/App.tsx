@@ -3,6 +3,7 @@ import { ThemeProvider } from "./contexts/theme-provider";
 import { SearchBar } from "./components/SearchBar";
 import { TrackCard } from "./components/TrackDownloadCard/TrackCard";
 import { PlaylistCard } from "./components/PlaylistDownloadCard/PlaylistCard";
+import { AlbumCard } from "./components/AlbumDownloadCard/AlbumCard";
 import { Toaster } from "@/components/ui/sonner";
 import { AppHeader } from "./components/AppHeader";
 import { EmptyOutline } from "./components/EmptyOutline";
@@ -40,6 +41,9 @@ function App() {
           )}
           {searchResult != null && searchResult.type === "playlist" && (
               <PlaylistCard playlistId={searchResult.id} />
+          )}
+          {searchResult != null && searchResult.type === "album" && (
+              <AlbumCard albumId={searchResult.id} />
           )}
         </div>
         <SearchBar

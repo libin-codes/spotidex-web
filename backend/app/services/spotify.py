@@ -28,7 +28,17 @@ class SpotifyService:
             album_name=track["album"]["name"],
             year=track["album"]["release_date"][:4],
         )
-
+    
+    def _build_album_track(self, track, album) -> TrackModel:
+        return TrackModel(
+            spotify_id=track["id"],
+            name=track["name"],
+            cover_url=album["images"][0]["url"],
+            artists=[artist["name"] for artist in track["artists"]],
+            album_name=album["name"],
+            year=album["release_date"][:4],
+        )
+    
     async def _resolve_youtube_data(self, track_name: str, artists: list[str]) -> tuple[str, int]:
         query = f"{track_name} {artists[0]}"
         results = await asyncio.to_thread(
@@ -85,8 +95,8 @@ class SpotifyService:
             name=album["name"],
             cover_url=album["images"][0]["url"],
             length=album["tracks"]["total"],
-            tracks=[self._build_track(item) for item in album["tracks"]["items"]],
             artists=[artist["name"] for artist in album["artists"]],
+            tracks=[self._build_album_track(item,album) for item in album["tracks"]["items"]],
         )
         model.tracks = await self._resolve_tracks(model.tracks)
         model.duration_seconds = sum(t.duration_seconds for t in model.tracks)
