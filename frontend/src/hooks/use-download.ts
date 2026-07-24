@@ -3,22 +3,19 @@ import { useMutation } from "@tanstack/react-query";
 import { downloadTrack, downloadPlaylist, downloadAlbum, getDownloadFileUrl } from "@/api/client";
 import { connectDownloadProgress } from "@/api/websocket";
 import type { TrackModel, PlaylistModel, AlbumModel, DownloadJob } from "@/api/types";
-import type { DownloadStatus } from "@/components/DownloadButton";
 
 export function useDownload() {
   const [jobId, setJobId] = useState<string | null>(null);
-  const [downloadStatus, setDownloadStatus] = useState<DownloadStatus>({
-    status: "idle",
-  });
+  const [job, setJob] = useState<DownloadJob | null>(null);
 
   const trackMutation = useMutation({
     mutationFn: downloadTrack,
     onSuccess: (data) => {
       setJobId(data.job_id);
-      setDownloadStatus({ status: "downloading", progress: 0 });
+      setJob(null);
     },
     onError: () => {
-      setDownloadStatus({ status: "failed" });
+      setJob(null);
     },
   });
 
@@ -26,10 +23,10 @@ export function useDownload() {
     mutationFn: downloadPlaylist,
     onSuccess: (data) => {
       setJobId(data.job_id);
-      setDownloadStatus({ status: "downloading", progress: 0 });
+      setJob(null);
     },
     onError: () => {
-      setDownloadStatus({ status: "failed" });
+      setJob(null);
     },
   });
 
@@ -37,29 +34,21 @@ export function useDownload() {
     mutationFn: downloadAlbum,
     onSuccess: (data) => {
       setJobId(data.job_id);
-      setDownloadStatus({ status: "downloading", progress: 0 });
+      setJob(null);
     },
     onError: () => {
-      setDownloadStatus({ status: "failed" });
+      setJob(null);
     },
   });
 
   useEffect(() => {
     if (!jobId) return;
 
-    return connectDownloadProgress(jobId, (job: DownloadJob) => {
-      if (job.status === "completed") {
-        setDownloadStatus({ status: "completed" });
+    return connectDownloadProgress(jobId, (updatedJob: DownloadJob) => {
+      if (updatedJob.status === "completed") {
         window.location.href = getDownloadFileUrl(jobId);
-      } else if (job.status === "failed") {
-        setDownloadStatus({ status: "failed" });
-      } else if (job.status === "downloading") {
-        const activeTrack = job.tracks.find((t) => t.status === "downloading");
-        const percent = activeTrack
-          ? Math.round(activeTrack.percent)
-          : 0;
-        setDownloadStatus({ status: "downloading", progress: percent });
       }
+      setJob(updatedJob);
     });
   }, [jobId]);
 
@@ -80,14 +69,14 @@ export function useDownload() {
 
   const reset = useCallback(() => {
     setJobId(null);
-    setDownloadStatus({ status: "idle" });
+    setJob(null);
     trackMutation.reset();
     playlistMutation.reset();
     albumMutation.reset();
   }, [trackMutation, playlistMutation, albumMutation]);
 
   return {
-    downloadStatus,
+    job,
     download,
     downloadPlaylist: downloadPlaylistTrack,
     downloadAlbum: downloadAlbumTrack,

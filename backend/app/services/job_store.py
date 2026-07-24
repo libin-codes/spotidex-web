@@ -79,7 +79,18 @@ class JobStore:
         if queue is not None:
             queue.put_nowait(None)
 
+    def _calculate_overall(self, job: DownloadJob) -> float:
+        completed_progress = sum(
+            100.0 for t in job.tracks if t.status == TrackDownloadStatus.COMPLETED
+        )
+        downloading_progress = sum(
+            t.percent for t in job.tracks if t.status == TrackDownloadStatus.DOWNLOADING
+        )
+        return (completed_progress + downloading_progress) / job.total
+
     def _notify(self, job_id: str) -> None:
         queue = self._queues.get(job_id)
         if queue is not None:
-            queue.put_nowait(self._jobs[job_id].model_dump())
+            job = self._jobs[job_id]
+            job.overall_progress = self._calculate_overall(job)
+            queue.put_nowait(job.model_dump())

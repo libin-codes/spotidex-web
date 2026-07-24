@@ -5,7 +5,7 @@ import { CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Clock, Music } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 
-type tracksDownloadHeaderProps = {
+type trackContainerHeaderProps = {
   cover_url: string;
   title: string;
   subtitle: string;
@@ -18,7 +18,7 @@ type tracksDownloadHeaderProps = {
   onToggleChange: () => void;
 };
 
-export default function TracksDownloadHeader({
+export default function TrackContainerHeader({
   cover_url,
   title,
   subtitle,
@@ -28,7 +28,7 @@ export default function TracksDownloadHeader({
   selectedCount,
   isAllSelected,
   onToggleChange
-}: tracksDownloadHeaderProps) {
+}: trackContainerHeaderProps) {
   return (
     <CardHeader className="sticky top-0 z-10 flex flex-col gap-4 p-0 pt-4 bg-card w-full">
       <div className="px-4 flex gap-2 justify-between w-full">

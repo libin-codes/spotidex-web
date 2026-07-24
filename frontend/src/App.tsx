@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ThemeProvider } from "./contexts/theme-provider";
 import { SearchBar } from "./components/SearchBar";
-import { TrackCard } from "./components/TrackDownloadCard/TrackCard";
-import { PlaylistCard } from "./components/PlaylistDownloadCard/PlaylistCard";
-import { AlbumCard } from "./components/AlbumDownloadCard/AlbumCard";
+import { TrackCard } from "./components/TrackCard/TrackCard";
+import { PlaylistCard } from "./components/PlaylistCard/PlaylistCard";
+import { AlbumCard } from "./components/AlbumCard/AlbumCard";
 import { Toaster } from "@/components/ui/sonner";
 import { AppHeader } from "./components/AppHeader";
 import { EmptyOutline } from "./components/EmptyOutline";

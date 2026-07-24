@@ -30,5 +30,5 @@
       ]
     }
   },
-  "include": ["src", "src/components/TracksDownloadCard/TrackSelectionHeader.tsx"]
+  "include": ["src", "src/components/TrackContainer/TrackSelectionHeader.tsx"]
 }

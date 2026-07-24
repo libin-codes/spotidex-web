@@ -35,6 +35,7 @@ export type DownloadJob = {
   failed: number;
   tracks: TrackDownloadProgress[];
   created_at: string;
+  overall_progress: number;
 };
 
 export type PlaylistModel = {

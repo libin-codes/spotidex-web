@@ -43,6 +43,7 @@ class DownloadJob(BaseModel):
     failed: int = 0
     tracks: List[TrackDownloadProgress]
     created_at: str
+    overall_progress: float = 0.0
 
 
 class DownloadResponse(BaseModel):

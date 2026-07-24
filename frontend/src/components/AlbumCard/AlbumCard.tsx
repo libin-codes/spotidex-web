@@ -1,8 +1,8 @@
 import { useAlbum } from "@/hooks/use-album";
 import { Card } from "../ui/card";
-import TracksDownloadHeader from "../TracksDownloadCard/TracksDownloadHeader";
-import TrackSelectionList from "../TracksDownloadCard/TrackSelectionList";
-import TracksDownloadFooter from "../TracksDownloadCard/TracksDownloadFooter";
+import TrackContainerHeader from "../TrackContainer/TrackContainerHeader";
+import TrackItemList from "../TrackContainer/TrackItemList";
+import TrackContainerFooter from "../TrackContainer/TrackContainerFooter";
 import LoadingScreen from "../LoadingScreen";
 import { useTrackSelection } from "@/hooks/use-track-selection";
 import { useDownload } from "@/hooks/use-download";
@@ -16,7 +16,7 @@ export function AlbumCard({ albumId }: AlbumCardProps) {
   const { selectedIds, selectedCount, isAllSelected, toggle, toggleAll } =
     useTrackSelection(album?.tracks.map((t) => t.spotify_id) ?? []);
 
-  const { downloadStatus } = useDownload();
+  const { job, downloadAlbum } = useDownload();
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -28,7 +28,7 @@ export function AlbumCard({ albumId }: AlbumCardProps) {
 
   return (
     <Card className="w-full h-full min-h-0 no-scrollbar p-0 gap-0" size="sm">
-      <TracksDownloadHeader
+      <TrackContainerHeader
         title={album.name}
         subtitle={album.artists.join(", ")}
         cover_url={album.cover_url}
@@ -42,14 +42,14 @@ export function AlbumCard({ albumId }: AlbumCardProps) {
         onToggleChange={() => toggleAll()}
         selectedCount={selectedCount}
       />
-      <TrackSelectionList
+      <TrackItemList
         tracks={album.tracks}
         onToggle={(id) => {
           toggle(id);
         }}
         selectedIds={selectedIds}
       />
-      <TracksDownloadFooter downloadStatus={downloadStatus} />
+      <TrackContainerFooter job={job} onDownloadClick={() => downloadAlbum(album)} />
     </Card>
   );
 }

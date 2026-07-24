@@ -1,17 +1,17 @@
 import { ItemGroup } from "../ui/item";
-import TrackItem from "./TrackSelectionItem";
+import TrackItem from "./TrackItem";
 import { CardContent } from "../ui/card";
 import type { TrackModel } from "@/api/types";
 
 
-type TrackSelectionListProps = {
+type TrackItemListProps = {
   tracks: TrackModel[];
   onChange?: (selectedIds: string[]) => void;
   onToggle: (id: string) => void;
   selectedIds:Set<string>;
 };
 
-export default function TrackSelectionList({ tracks,onToggle,selectedIds }: TrackSelectionListProps) {
+export default function TrackItemList({ tracks,onToggle,selectedIds }: TrackItemListProps) {
 
 
   return (

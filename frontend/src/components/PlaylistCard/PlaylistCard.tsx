@@ -1,8 +1,8 @@
 import { usePlaylist } from "@/hooks/use-playlist";
 import { Card } from "../ui/card";
-import TracksDownloadHeader from "../TracksDownloadCard/TracksDownloadHeader";
-import TrackSelectionList from "../TracksDownloadCard/TrackSelectionList";
-import TracksDownloadFooter from "../TracksDownloadCard/TracksDownloadFooter";
+import TrackContainerHeader from "../TrackContainer/TrackContainerHeader";
+import TrackItemList from "../TrackContainer/TrackItemList";
+import TrackContainerFooter from "../TrackContainer/TrackContainerFooter";
 import LoadingScreen from "../LoadingScreen";
 import { useTrackSelection } from "@/hooks/use-track-selection";
 import { useDownload } from "@/hooks/use-download";
@@ -16,7 +16,7 @@ export function PlaylistCard({ playlistId }: PlaylistCardProps) {
   const { selectedIds, selectedCount, isAllSelected, toggle, toggleAll } =
     useTrackSelection(playlist?.tracks.map((t) => t.spotify_id) ?? []);
 
-  const {downloadStatus} = useDownload()
+  const { job, downloadPlaylist } = useDownload()
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -28,7 +28,7 @@ export function PlaylistCard({ playlistId }: PlaylistCardProps) {
 
   return (
     <Card className="w-full h-full min-h-0 no-scrollbar p-0 gap-0" size="sm">
-      <TracksDownloadHeader
+      <TrackContainerHeader
         title={playlist.name}
         subtitle={playlist.creator}
         cover_url={playlist.cover_url}
@@ -42,7 +42,7 @@ export function PlaylistCard({ playlistId }: PlaylistCardProps) {
         onToggleChange={() => toggleAll()}
         selectedCount={selectedCount}
       />
-      <TrackSelectionList
+      <TrackItemList
         tracks={playlist.tracks}
         onToggle={(id) => {
           toggle(id);
@@ -50,7 +50,7 @@ export function PlaylistCard({ playlistId }: PlaylistCardProps) {
         selectedIds={selectedIds}
 
       />
-      <TracksDownloadFooter downloadStatus={downloadStatus} />
+      <TrackContainerFooter job={job} onDownloadClick={() => downloadPlaylist(playlist)} />
     </Card>
   );
 }

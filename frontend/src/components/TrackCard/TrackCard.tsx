@@ -19,9 +19,9 @@ type TrackCardProps = {
 
 export function TrackCard({ trackId}: TrackCardProps) {
   const { data: track, isLoading } = useTrack(trackId);
-  const {download,downloadStatus} = useDownload()
+  const {download, job} = useDownload()
 
-  
+
 
   if (isLoading){
     return "Loading..."
@@ -76,7 +76,7 @@ export function TrackCard({ trackId}: TrackCardProps) {
           <Settings />
         </Button>
         <DownloadButton
-          status={downloadStatus}
+          job={job}
           onClick={() => {
             download(track);
           }}
