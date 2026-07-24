@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { downloadTrack, getDownloadFileUrl } from "@/api/client";
+import { downloadTrack, downloadPlaylist, getDownloadFileUrl } from "@/api/client";
 import { connectDownloadProgress } from "@/api/websocket";
-import type { TrackModel, DownloadJob } from "@/api/types";
+import type { TrackModel, PlaylistModel, DownloadJob } from "@/api/types";
 import type { DownloadStatus } from "@/components/DownloadButton";
 
 export function useDownload() {
@@ -11,8 +11,19 @@ export function useDownload() {
     status: "idle",
   });
 
-  const mutation = useMutation({
+  const trackMutation = useMutation({
     mutationFn: downloadTrack,
+    onSuccess: (data) => {
+      setJobId(data.job_id);
+      setDownloadStatus({ status: "downloading", progress: 0 });
+    },
+    onError: () => {
+      setDownloadStatus({ status: "failed" });
+    },
+  });
+
+  const playlistMutation = useMutation({
+    mutationFn: downloadPlaylist,
     onSuccess: (data) => {
       setJobId(data.job_id);
       setDownloadStatus({ status: "downloading", progress: 0 });
@@ -42,20 +53,27 @@ export function useDownload() {
   }, [jobId]);
 
   const download = useCallback(
-    (track: TrackModel) => mutation.mutate(track),
-    [mutation],
+    (track: TrackModel) => trackMutation.mutate(track),
+    [trackMutation],
+  );
+
+  const downloadPlaylistTrack = useCallback(
+    (playlist: PlaylistModel) => playlistMutation.mutate(playlist),
+    [playlistMutation],
   );
 
   const reset = useCallback(() => {
     setJobId(null);
     setDownloadStatus({ status: "idle" });
-    mutation.reset();
-  }, [mutation]);
+    trackMutation.reset();
+    playlistMutation.reset();
+  }, [trackMutation, playlistMutation]);
 
   return {
     downloadStatus,
     download,
+    downloadPlaylist: downloadPlaylistTrack,
     reset,
-    isPending: mutation.isPending,
+    isPending: trackMutation.isPending || playlistMutation.isPending,
   };
 }

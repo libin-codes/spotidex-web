@@ -37,6 +37,16 @@ export type DownloadJob = {
   created_at: string;
 };
 
+export type PlaylistModel = {
+  spotify_id: string;
+  name: string;
+  cover_url: string;
+  creator: string;
+  length: number;
+  tracks: TrackModel[];
+  duration_seconds: number;
+};
+
 export type DownloadResponse = {
   job_id: string;
 };

@@ -13,7 +13,7 @@ export default function TracksDownloadFooter({
   onDownloadClick,
 }: TracksDownloadFooterProps) {
   return (
-    <CardFooter className="sticky bottom-0 z-10 gap-1">
+    <CardFooter className="sticky bottom-0 z-10 gap-1 border-t pb-4  bg-card ">
       <Button variant="secondary" size="icon-lg">
         <Settings />
       </Button>

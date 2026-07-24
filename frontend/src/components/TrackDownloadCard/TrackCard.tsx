@@ -21,6 +21,8 @@ export function TrackCard({ trackId}: TrackCardProps) {
   const { data: track, isLoading } = useTrack(trackId);
   const {download,downloadStatus} = useDownload()
 
+  
+
   if (isLoading){
     return "Loading..."
   }
@@ -28,6 +30,11 @@ export function TrackCard({ trackId}: TrackCardProps) {
   if (!track) {
     return "Failed to load track."
   }
+
+  const minutes = Math.floor(track.duration_seconds / 60);
+  const remainingSeconds = track.duration_seconds % 60;
+
+  const formatedDuration = `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 
   return (
     <Card className="max-w-sm p-4" size="sm">
@@ -47,7 +54,7 @@ export function TrackCard({ trackId}: TrackCardProps) {
           </div>
           <Badge variant="secondary">
             <Clock data-icon="inline-start" />
-            3:14
+            {formatedDuration}
           </Badge>
         </div>
         <img
@@ -70,12 +77,11 @@ export function TrackCard({ trackId}: TrackCardProps) {
         </Button>
         <DownloadButton
           status={downloadStatus}
-          onClick={()=>{
-            download(track)
+          onClick={() => {
+            download(track);
           }}
           className="flex-1"
         />
-        
       </CardFooter>
     </Card>
   );

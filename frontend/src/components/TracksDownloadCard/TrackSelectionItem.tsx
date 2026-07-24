@@ -1,51 +1,61 @@
+import type { TrackModel } from "@/api/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Item,
-  ItemActions,
   ItemContent,
   ItemDescription,
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
+import { cn } from "@/lib/utils";
 
 type TrackItemProps = {
-  cover_url: string;
-  title: string;
-  artists: string[];
+  track:TrackModel;
   isSelected:boolean;
   onSelectChange?: (isSelected: boolean) => void;
 };
 
 export default function TrackItem({
-  cover_url,
-  title,
-  artists,
+  track,
   isSelected,
   onSelectChange,
 }: TrackItemProps) {
+
+  const minutes = Math.floor(track.duration_seconds / 60);
+  const remainingSeconds = track.duration_seconds % 60;
+
+  const formatedDuration = `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 
 
   return (
     <Item
       variant="outline"
-      className={`cursor-pointer border-0 p-3 px-0  rounded-none `}
+      className={cn(
+        `cursor-pointer border-0 p-3 px-4  rounded-none `,
+        isSelected && "bg-secondary",
+      )}
       onClick={() => {
         onSelectChange?.(!isSelected);
-       
       }}
     >
+      <Checkbox
+        checked={isSelected}
+        onClick={() => {
+          onSelectChange?.(!isSelected);
+        }}
+      />
       <ItemMedia variant="image">
-        <img src={cover_url} alt={"Cover Art"} />
+        <img src={track.cover_url} alt={"Cover Art"} />
       </ItemMedia>
-      <ItemContent className="gap-0">
-        <ItemTitle className="line-clamp-1">{title}</ItemTitle>
+      <ItemContent className="gap-0 pt-0">
+        <ItemTitle className="line-clamp-1">{track.name}</ItemTitle>
         <ItemDescription className="line-clamp-1">
-          {artists.toString()}
+          {track.artists.toString()}
         </ItemDescription>
       </ItemContent>
-      <ItemActions className="pointer-events-none">
-        <Checkbox checked={isSelected} />
-      </ItemActions>
+      <ItemContent className="flex-none text-center">
+        <ItemDescription>{formatedDuration}</ItemDescription>
+      </ItemContent>
     </Item>
   );
 }
