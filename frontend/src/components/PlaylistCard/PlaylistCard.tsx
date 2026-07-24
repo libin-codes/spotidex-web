@@ -6,6 +6,7 @@ import TrackContainerFooter from "../TrackContainer/TrackContainerFooter";
 import LoadingScreen from "../LoadingScreen";
 import { useTrackSelection } from "@/hooks/use-track-selection";
 import { useDownload } from "@/hooks/use-download";
+import { useCallback } from "react";
 
 type PlaylistCardProps = {
   playlistId: string;
@@ -17,6 +18,18 @@ export function PlaylistCard({ playlistId }: PlaylistCardProps) {
     useTrackSelection(playlist?.tracks.map((t) => t.spotify_id) ?? []);
 
   const { job, downloadPlaylist } = useDownload()
+
+  const handleDownload = useCallback(() => {
+    if (!playlist) return;
+    const selectedTracks = playlist.tracks.filter((t) =>
+      selectedIds.has(t.spotify_id),
+    );
+    downloadPlaylist({
+      ...playlist,
+      tracks: selectedTracks,
+      length: selectedTracks.length,
+    });
+  }, [playlist, selectedIds, downloadPlaylist]);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -33,14 +46,10 @@ export function PlaylistCard({ playlistId }: PlaylistCardProps) {
         subtitle={playlist.creator}
         cover_url={playlist.cover_url}
         totalTracks={playlist.length}
-        totalDuration={playlist.tracks.reduce(
-          (total, item) => total + item.duration_seconds,
-          0,
-        )}
-        type="Playlist"
         isAllSelected={isAllSelected}
         onToggleChange={() => toggleAll()}
         selectedCount={selectedCount}
+        job={job}
       />
       <TrackItemList
         tracks={playlist.tracks}
@@ -48,9 +57,9 @@ export function PlaylistCard({ playlistId }: PlaylistCardProps) {
           toggle(id);
         }}
         selectedIds={selectedIds}
-
+        jobTracks={job?.tracks}
       />
-      <TrackContainerFooter job={job} onDownloadClick={() => downloadPlaylist(playlist)} />
+      <TrackContainerFooter job={job} onDownloadClick={handleDownload} />
     </Card>
   );
 }

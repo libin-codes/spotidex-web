@@ -4,6 +4,7 @@ import { SearchBar } from "./components/SearchBar";
 import { TrackCard } from "./components/TrackCard/TrackCard";
 import { PlaylistCard } from "./components/PlaylistCard/PlaylistCard";
 import { AlbumCard } from "./components/AlbumCard/AlbumCard";
+import TrackItemDemo from "./pages/TrackItemDemo";
 import { Toaster } from "@/components/ui/sonner";
 import { AppHeader } from "./components/AppHeader";
 import { EmptyOutline } from "./components/EmptyOutline";
@@ -11,6 +12,14 @@ import { EmptyOutline } from "./components/EmptyOutline";
 import type { SpotifyResource } from "./components/types";
 
 function App() {
+  // if (window.location.hash === "#dev") {
+  //   return (
+  //     <ThemeProvider>
+  //       <TrackItemDemo />
+  //     </ThemeProvider>
+  //   );
+  // }
+
   const [searchResult, setSearchResult] = useState<SpotifyResource | null>(
     null,
   );
