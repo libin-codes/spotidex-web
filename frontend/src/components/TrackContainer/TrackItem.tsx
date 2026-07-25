@@ -7,7 +7,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
-import { cn } from "@/lib/utils";
+import { cn, getTrackDurationString } from "@/lib/utils";
 import { Check, Clock, Loader2, X } from "lucide-react";
 
 type TrackItemProps = {
@@ -23,19 +23,9 @@ export default function TrackItem({
   onSelectChange,
   trackStatus = "idle",
 }: TrackItemProps) {
-  const minutes = Math.floor(track.duration_seconds / 60);
-  const remainingSeconds = track.duration_seconds % 60;
 
-  const status =
-    trackStatus === "idle" ? "idle" : trackStatus.status;
-  const percent =
-    trackStatus !== "idle" ? Math.round(trackStatus.percent) : 0;
-
-  const formatedDuration = `${minutes}:${remainingSeconds
-    .toString()
-    .padStart(2, "0")}`;
-
-  const onClick = status === "idle" ? () => onSelectChange?.(!isSelected) : undefined;
+  const status = trackStatus === "idle" ? "idle" : trackStatus.status;
+  const percent = trackStatus !== "idle" ? Math.round(trackStatus.percent) : 0;
 
   return (
     <Item
@@ -49,7 +39,11 @@ export default function TrackItem({
         status === "completed" && "bg-green-500/20",
         status === "failed" && "bg-red-500/20",
       )}
-      onClick={onClick}
+      onClick={()=>{
+        if (status==="idle"){
+          onSelectChange?.(!isSelected);
+        }
+      }}
     >
       {status === "downloading" && (
         <span
@@ -69,76 +63,35 @@ export default function TrackItem({
         <img src={track.cover_url} alt={"Cover Art"} />
       </ItemMedia>
 
-      {status === "downloading" ? (
-        <>
-          <ItemContent className="gap-0 pt-0 z-10 ">
-            <ItemTitle className="line-clamp-1">{track.name}</ItemTitle>
-            <ItemDescription className="line-clamp-1">
-              {track.artists.toString()}
-            </ItemDescription>
-          </ItemContent>
-          <ItemContent className="flex-none text-center z-10">
-            <ItemDescription className="flex items-center gap-1 font-bold text-white ">
+      <>
+        <ItemContent className="gap-0 pt-0 z-10 ">
+          <ItemTitle className="line-clamp-1">{track.name}</ItemTitle>
+          <ItemDescription className="line-clamp-1">
+            {track.artists.toString()}
+          </ItemDescription>
+        </ItemContent>
+        <ItemContent className="flex-none text-center z-10">
+          <ItemDescription
+            className={cn(
+              "flex items-center gap-1 ",
+              status === "downloading" && "text-white",
+              status === "pending" && "text-yellow-500",
+              status === "completed" && "text-emerald-500",
+              status === "failed" && "text-red-500",
+            )}
+          >
+            {status === "idle" && getTrackDurationString(track.duration_seconds)}
+            {status === "downloading" && (
               <Loader2 className="size-3 animate-spin" />
-              {percent}%
-            </ItemDescription>
-          </ItemContent>
-        </>
-      ) : status === "pending" ? (
-        <>
-          <ItemContent className="gap-0 pt-0">
-            <ItemTitle className="line-clamp-1">{track.name}</ItemTitle>
-            <ItemDescription className="line-clamp-1">
-              {track.artists.toString()}
-            </ItemDescription>
-          </ItemContent>
-          <ItemContent className="flex-none text-center">
-            <ItemDescription className="flex items-center gap-1 text-yellow-500">
-              <Clock className="size-4" />
-            </ItemDescription>
-          </ItemContent>
-        </>
-      ) : status === "completed" ? (
-        <>
-          <ItemContent className="gap-0 pt-0">
-            <ItemTitle className="line-clamp-1">{track.name}</ItemTitle>
-            <ItemDescription className="line-clamp-1">
-              {track.artists.toString()}
-            </ItemDescription>
-          </ItemContent>
-          <ItemContent className="flex-none text-center">
-            <ItemDescription className="flex items-center gap-1 text-emerald-500">
-              <Check className="size-4" />
-            </ItemDescription>
-          </ItemContent>
-        </>
-      ) : status === "failed" ? (
-        <>
-          <ItemContent className="gap-0 pt-0">
-            <ItemTitle className="line-clamp-1">{track.name}</ItemTitle>
-            <ItemDescription className="line-clamp-1">
-              {track.artists.toString()}
-            </ItemDescription>
-          </ItemContent>
-          <ItemContent className="flex-none text-center">
-            <ItemDescription className="flex items-center gap-1 text-red-500">
-              <X className="size-4" />
-            </ItemDescription>
-          </ItemContent>
-        </>
-      ) : (
-        <>
-          <ItemContent className="gap-0 pt-0">
-            <ItemTitle className="line-clamp-1">{track.name}</ItemTitle>
-            <ItemDescription className="line-clamp-1">
-              {track.artists.toString()}
-            </ItemDescription>
-          </ItemContent>
-          <ItemContent className="flex-none text-center">
-            <ItemDescription>{formatedDuration}</ItemDescription>
-          </ItemContent>
-        </>
-      )}
+            )}
+            {status === "downloading" && `${percent}%`}
+            {status === "pending" && <Clock className="size-4" />}
+
+            {status === "completed" && <Check className="size-4" />}
+            {status === "failed" && <X className="size-4" />}
+          </ItemDescription>
+        </ItemContent>
+      </>
     </Item>
   );
 }

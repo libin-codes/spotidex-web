@@ -15,3 +15,13 @@ export function formatDuration(seconds: number): string {
 
   return `${minutes} min${minutes !== 1 ? "s" : ""}`;
 }
+
+export function getTrackDurationString(seconds: number): string{
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  const formatedDuration = `${minutes}:${remainingSeconds
+    .toString()
+    .padStart(2, "0")}`;
+
+  return formatedDuration
+}

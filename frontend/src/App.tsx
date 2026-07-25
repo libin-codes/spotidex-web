@@ -12,13 +12,13 @@ import { EmptyOutline } from "./components/EmptyOutline";
 import type { SpotifyResource } from "./components/types";
 
 function App() {
-  // if (window.location.hash === "#dev") {
-  //   return (
-  //     <ThemeProvider>
-  //       <TrackItemDemo />
-  //     </ThemeProvider>
-  //   );
-  // }
+  if (window.location.hash === "#dev") {
+    return (
+      <ThemeProvider>
+        <TrackItemDemo />
+      </ThemeProvider>
+    );
+  }
 
   const [searchResult, setSearchResult] = useState<SpotifyResource | null>(
     null,
