@@ -31,13 +31,13 @@ export default function TrackItem({
     <Item
       variant="outline"
       className={cn(
-        "border-0 p-3 px-4 rounded-none relative ",
+        "border-0 py-3 pb-4 pt-3 rounded-none relative ",
         status !== "idle" && "border-b",
         status === "idle" && "cursor-pointer",
         status === "idle" && isSelected && "bg-secondary",
-        status === "pending" && "bg-yellow-500/20",
-        status === "completed" && "bg-green-500/20",
-        status === "failed" && "bg-red-500/20",
+        status === "pending" && "bg-yellow-500/10",
+        status === "completed" && "bg-green-500/10",
+        status === "failed" && "bg-red-500/10",
       )}
       onClick={()=>{
         if (status==="idle"){
@@ -76,7 +76,7 @@ export default function TrackItem({
               "flex items-center gap-1 ",
               status === "downloading" && "text-white",
               status === "pending" && "text-yellow-500",
-              status === "completed" && "text-emerald-500",
+              status === "completed" && "text-green-500",
               status === "failed" && "text-red-500",
             )}
           >

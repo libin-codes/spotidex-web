@@ -26,13 +26,19 @@ export default function TrackItemList({ tracks, onToggle, selectedIds, jobTracks
     return map;
   }, [jobTracks]);
 
+  const visibleTracks = useMemo(() => {
+    return jobTracks
+      ? tracks.filter((track) => selectedIds.has(track.spotify_id))
+      : tracks;
+  }, [tracks, jobTracks, selectedIds]);
+
   const sortedTracks = useMemo(() => {
-    return [...tracks].sort((a, b) => {
+    return [...visibleTracks].sort((a, b) => {
       const aStatus = trackStatusMap.get(a.spotify_id)?.status ?? "idle";
       const bStatus = trackStatusMap.get(b.spotify_id)?.status ?? "idle";
       return (STATUS_ORDER[aStatus] ?? 4) - (STATUS_ORDER[bStatus] ?? 4);
     });
-  }, [tracks, trackStatusMap]);
+  }, [visibleTracks, trackStatusMap]);
 
   return (
     <CardContent className="flex-1 h-full p-0 min-h-0 ">

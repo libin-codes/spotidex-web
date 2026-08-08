@@ -1,14 +1,13 @@
 import { useState } from "react";
 
-type UseTrackSelectionOptions = {
-  initialSelected?: string[];
-  onChange?: (selected: string[]) => void;
-};
+export function useTrackSelection(ids: string[]) {
+  
 
-export function useTrackSelection(ids: string[], options?: UseTrackSelectionOptions) {
   const [selectedIds, setSelectedIds] = useState(
-    () => new Set(options?.initialSelected ?? ids),
+    () => new Set(ids),
   );
+
+
 
   function toggle(id: string) {
     setSelectedIds((prev) => {
@@ -20,7 +19,7 @@ export function useTrackSelection(ids: string[], options?: UseTrackSelectionOpti
         next.add(id);
       }
 
-      options?.onChange?.([...next]);
+    
       return next;
     });
   }
@@ -29,7 +28,7 @@ export function useTrackSelection(ids: string[], options?: UseTrackSelectionOpti
     setSelectedIds((prev) => {
       const next = prev.size === ids.length ? new Set<string>() : new Set(ids);
 
-      options?.onChange?.([...next]);
+    
       return next;
     });
   }

@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { CardHeader, CardTitle, CardDescription } from "../ui/card";
-import { Check, X } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 import type { DownloadJob } from "@/api/types";
 
@@ -33,8 +32,6 @@ export default function TrackContainerHeader({
 
   return (
     <CardHeader className="sticky top-0 z-10 flex flex-col gap-4 p-0 pt-4 bg-card w-full">
-   
-
       <div className="px-4 flex gap-4">
         <img
           src={cover_url}
@@ -51,14 +48,18 @@ export default function TrackContainerHeader({
       </div>
 
       {isJobActive ? (
-        <div className="flex justify-between items-center p-4 border-y bg-card w-full">
-          <div className="flex gap-2 items-center text-red-500/70 font-semibold">
-            <X className="size-4" />
-            Failed {job!.failed}
+        <div className="flex gap-4 items-center p-4 border-y bg-card w-full font-medium">
+          <div className="flex justify-center gap-1 items-center text-red-500/70">
+           
+            {job!.failed} Failed
           </div>
-          <div className="flex justify-center items-center gap-2 text-green-500/70 font-medium">
-            <Check className="size-4" />
-            success {job!.completed}
+          <div className="flex justify-center items-center gap-1 text-yellow-500/70">
+           
+            {job!.tracks.filter((t) => t.status === "pending").length} Pending
+          </div>
+          <div className="flex justify-center items-center gap-1 text-green-500/70">
+           
+            {job!.completed} Success
           </div>
         </div>
       ) : (
