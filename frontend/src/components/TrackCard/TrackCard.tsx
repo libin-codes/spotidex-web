@@ -39,20 +39,20 @@ export function TrackCard({ trackId}: TrackCardProps) {
   return (
     <Card className="max-w-sm p-4" size="sm">
       <CardContent className="p-0 space-y-4">
-        <div className="flex gap-2 justify-between px-1">
-          <div className="space-x-2">
+        <div className="flex items-center gap-2 justify-between px-1">
+          <div className="flex min-w-0 items-center gap-2 overflow-hidden">
             {track.album_name && (
-              <Badge variant="secondary" className="truncate">
+              <Badge variant="secondary" className="min-w-0 shrink truncate">
                 <DiscAlbum />
-                {track.album_name}
+                <span className="min-w-0 truncate">{track.album_name}</span>
               </Badge>
             )}
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="shrink-0">
               <Calendar data-icon="inline-start" />
               {track.year}
             </Badge>
           </div>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="shrink-0">
             <Clock data-icon="inline-start" />
             {formatedDuration}
           </Badge>

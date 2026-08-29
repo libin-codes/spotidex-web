@@ -1,5 +1,6 @@
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -11,7 +12,7 @@ import { BsSpotify } from "react-icons/bs";
 
 export function EmptyOutline() {
   return (
-    <Empty className="border border-dashed h-full ">
+    <Empty className="border border-dashed h-full">
       <EmptyHeader className=" text-foreground/90">
         <EmptyMedia variant="icon">
           <BsSpotify />
@@ -20,9 +21,11 @@ export function EmptyOutline() {
           SPOTIFY DOWNLOADER
         </EmptyTitle>
         <EmptyDescription>
-          Search for music or Paste Spotify URL to begin
+          Search or paste spotify URL to begin
         </EmptyDescription>
-      
+        <EmptyContent>
+          
+        </EmptyContent>
       </EmptyHeader>
     </Empty>
   );

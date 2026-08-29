@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Clipboard, Loader, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import type { SpotifyResource } from "./types";
+import { ButtonGroup } from "./ui/button-group";
 
 type SearchBarProps = {
   onPaste?: (resource: SpotifyResource) => void;
@@ -73,51 +74,52 @@ export function SearchBar({
   }
 
   return (
-    <Field orientation={"horizontal"} className="gap-2 border-t px-2 py-3">
-    
-      <Input
-        type="search"
-        placeholder="Search or Paste"
-        value={searchInput}
-        onChange={(e) => setSearchInput(e.target.value)}
-        disabled={state != "idle"}
-      />
+    <Field orientation={"horizontal"} className="gap-2  pt-3 px-3.5">
+      <ButtonGroup className="w-full">
+        <Input
+          type="search"
+          placeholder="Search or Paste"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          disabled={state != "idle"}
+        />
 
-      <Button
-        size={"lg"}
-        className={"w-26"}
-        variant={variants[state]}
-        disabled={state === "loading"}
-        onClick={handleButtonClick}
-      >
-        {state === "idle" && searchInput === "" && (
-          <>
-            <Clipboard />
-            Paste
-          </>
-        )}
+        <Button
+          
+          className={"w-23"}
+          variant={variants[state]}
+          disabled={state === "loading"}
+          onClick={handleButtonClick}
+        >
+          {state === "idle" && searchInput === "" && (
+            <>
+              <Clipboard />
+              Paste
+            </>
+          )}
 
-        {state === "idle" && searchInput !== "" && (
-          <>
-            <Search />
-            Search
-          </>
-        )}
+          {state === "idle" && searchInput !== "" && (
+            <>
+              <Search />
+              Search
+            </>
+          )}
 
-        {state === "loading" && (
-          <>
-            <Loader className="animate-spin" />
-            Loading
-          </>
-        )}
+          {state === "loading" && (
+            <>
+              <Loader className="animate-spin" />
+              Loading
+            </>
+          )}
 
-        {state === "locked" && (
-          <>
-            <X />
-            Clear
-          </>
-        )}
-      </Button>
+          {state === "locked" && (
+            <>
+              <X />
+              Clear
+            </>
+          )}
+        </Button>
+      </ButtonGroup>
     </Field>
   );
 }
