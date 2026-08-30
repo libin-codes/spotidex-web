@@ -5,7 +5,6 @@ export type TrackModel = {
   artists: string[];
   album_name: string;
   year: string;
-  youtube_id: string;
   duration_seconds: number;
 };
 

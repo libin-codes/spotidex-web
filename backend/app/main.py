@@ -12,5 +12,3 @@ app = FastAPI(title="Spotidex API", version="1.0")
 
 app.include_router(spotify_router)
 app.include_router(download_router)
-
-app.mount("/", StaticFiles(directory="../static", html=True), name="static")

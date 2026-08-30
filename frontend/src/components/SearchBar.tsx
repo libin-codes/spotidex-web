@@ -75,7 +75,7 @@ export function SearchBar({
     <Field className="gap-2 p-3 pt-0">
       <InputGroup className="h-12.5 rounded-full">
         <InputGroupInput
-          className="h-12 rounded-full pl-5 text-md"
+          className="h-12 rounded-full pl-5 text-md disabled:opacity-80"
           type="search"
           placeholder="Search or Paste to Begin"
           value={searchInput}
@@ -85,7 +85,7 @@ export function SearchBar({
         <InputGroupAddon align={"inline-end"}>
           <InputGroupButton
             size={"sm"}
-            className={"w-23 disabled:opacity-100"}
+            className={"w-23 "}
             variant={variants[state]}
             disabled={state === "loading"}
             onClick={handleButtonClick}
