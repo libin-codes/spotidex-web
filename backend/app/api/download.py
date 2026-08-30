@@ -1,9 +1,6 @@
-import asyncio
-
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, StreamingResponse
 from starlette.background import BackgroundTask
-from ytmusicapi import YTMusic
 
 from app.services.download_manager import DownloadManager
 from app.models import (
@@ -16,48 +13,26 @@ from app.models import (
 
 router = APIRouter(prefix="/download", tags=["download"])
 manager = DownloadManager()
-ytmusic = YTMusic()
-
-
-async def resolve_youtube_data(track: TrackModel) -> TrackModel:
-    query = f"{track.name} {track.artists[0]}" if track.artists else track.name
-    results = await asyncio.to_thread(ytmusic.search, query, filter="songs", limit=1)
-    if results and "videoId" in results[0]:
-        return track.model_copy(
-            update={
-                "youtube_id": results[0]["videoId"],
-                "duration_seconds": int(results[0].get("duration_seconds", track.duration_seconds)),
-            }
-        )
-    return track
-
-
-async def resolve_download_tracks(tracks: list[TrackModel]) -> list[TrackModel]:
-    resolved = await asyncio.gather(*(resolve_youtube_data(track) for track in tracks))
-    return list(resolved)
 
 
 @router.post("/track", response_model=DownloadResponse)
 async def download_track(track: TrackModel) -> DownloadResponse:
-    prepared = await resolve_download_tracks([track])
-    job_id = manager.create_job(prepared[0].name, DownloadJobType.TRACK, prepared)
-    manager.start_download(job_id, prepared)
+    job_id = manager.create_job(track.name, DownloadJobType.TRACK, [track])
+    manager.start_download(job_id, [track])
     return DownloadResponse(job_id=job_id)
 
 
 @router.post("/playlist", response_model=DownloadResponse)
 async def download_playlist(playlist: PlaylistModel) -> DownloadResponse:
-    prepared = await resolve_download_tracks(playlist.tracks)
-    job_id = manager.create_job(playlist.name, DownloadJobType.PLAYLIST, prepared)
-    manager.start_download(job_id, prepared)
+    job_id = manager.create_job(playlist.name, DownloadJobType.PLAYLIST, playlist.tracks)
+    manager.start_download(job_id, playlist.tracks)
     return DownloadResponse(job_id=job_id)
 
 
 @router.post("/album", response_model=DownloadResponse)
 async def download_album(album: AlbumModel) -> DownloadResponse:
-    prepared = await resolve_download_tracks(album.tracks)
-    job_id = manager.create_job(album.name, DownloadJobType.ALBUM, prepared)
-    manager.start_download(job_id, prepared)
+    job_id = manager.create_job(album.name, DownloadJobType.ALBUM, album.tracks)
+    manager.start_download(job_id, album.tracks)
     return DownloadResponse(job_id=job_id)
 
 

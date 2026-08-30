@@ -5,6 +5,7 @@ import zipfile
 from pathlib import Path
 
 from fastapi import HTTPException
+from ytmusicapi import YTMusic
 
 from app.services.downloader import download_track, MAX_CONCURRENT, MAX_RETRIES
 from app.services.job_store import JobStore
@@ -22,12 +23,14 @@ class DownloadManager:
     _instance: "DownloadManager | None" = None
     _job_store: JobStore
     _cleanup: CleanupManager
+    _ytmusic: YTMusic
 
     def __new__(cls) -> "DownloadManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._job_store = JobStore()
             cls._instance._cleanup = CleanupManager()
+            cls._instance._ytmusic = YTMusic()
         return cls._instance
 
     def create_job(self, name: str, type: DownloadJobType, tracks: list[TrackModel]) -> str:
@@ -99,6 +102,30 @@ class DownloadManager:
 
         self._job_store.set_status(job_id, DownloadStatus.DOWNLOADING)
 
+        async def resolve_youtube_data(track: TrackModel) -> TrackModel:
+            query = f"{track.name} {track.artists[0]}" if track.artists else track.name
+            results = await asyncio.to_thread(
+                self._ytmusic.search, query, filter="songs", limit=1
+            )
+            if results and "videoId" in results[0]:
+                return track.model_copy(
+                    update={
+                        "youtube_id": results[0]["videoId"],
+                        "duration_seconds": int(
+                            results[0].get("duration_seconds", track.duration_seconds)
+                        ),
+                    }
+                )
+            return track
+
+        async def resolve_download_tracks(tracks: list[TrackModel]) -> list[TrackModel]:
+            resolved = await asyncio.gather(
+                *(resolve_youtube_data(track) for track in tracks)
+            )
+            return list(resolved)
+
+        prepared_tracks = await resolve_download_tracks(tracks)
+
         semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
         async def download_one(i: int, track: TrackModel) -> None:
@@ -132,7 +159,9 @@ class DownloadManager:
                 )
                 self._job_store.increment_failed(job_id)
 
-        await asyncio.gather(*[download_one(i, t) for i, t in enumerate(tracks)])
+        await asyncio.gather(
+            *[download_one(i, t) for i, t in enumerate(prepared_tracks)]
+        )
 
         job = self._job_store.get(job_id)
         assert job is not None
