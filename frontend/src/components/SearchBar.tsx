@@ -1,11 +1,9 @@
-import { Button } from "./ui/button";
 import { Field } from "./ui/field";
-import { Input } from "./ui/input";
 import { useState } from "react";
 import { Clipboard, Loader, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import type { SpotifyResource } from "./types";
-import { ButtonGroup } from "./ui/button-group";
+import { InputGroup,InputGroupAddon, InputGroupButton, InputGroupInput } from "./ui/input-group";
 
 type SearchBarProps = {
   onPaste?: (resource: SpotifyResource) => void;
@@ -74,52 +72,58 @@ export function SearchBar({
   }
 
   return (
-    <Field orientation={"horizontal"} className="gap-2  pt-3 px-3.5">
-      <ButtonGroup className="w-full">
-        <Input
+    <Field className="gap-2 p-3 pt-0">
+      <InputGroup className="h-12.5 rounded-full">
+        <InputGroupInput
+          className="h-12 rounded-full pl-5 text-md"
           type="search"
-          placeholder="Search or Paste"
+          placeholder="Search or Paste to Begin"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           disabled={state != "idle"}
         />
+        <InputGroupAddon align={"inline-end"}>
+          <InputGroupButton
+            size={"sm"}
+            className={"w-23 disabled:opacity-100"}
+            variant={variants[state]}
+            disabled={state === "loading"}
+            onClick={handleButtonClick}
 
-        <Button
-          
-          className={"w-23"}
-          variant={variants[state]}
-          disabled={state === "loading"}
-          onClick={handleButtonClick}
-        >
-          {state === "idle" && searchInput === "" && (
-            <>
-              <Clipboard />
-              Paste
-            </>
-          )}
+          >
+            {state === "idle" && searchInput === "" && (
+              <>
+                <Clipboard />
+                Paste
+              
+              </>
+            )}
 
-          {state === "idle" && searchInput !== "" && (
-            <>
-              <Search />
-              Search
-            </>
-          )}
+            {state === "idle" && searchInput !== "" && (
+              <>
+                <Search />
+                Search
+            
+              </>
+            )}
 
-          {state === "loading" && (
-            <>
-              <Loader className="animate-spin" />
-              Loading
-            </>
-          )}
+            {state === "loading" && (
+              <>
+                <Loader className="animate-spin" />
+                Loading
+              
+              </>
+            )}
 
-          {state === "locked" && (
-            <>
-              <X />
-              Clear
-            </>
-          )}
-        </Button>
-      </ButtonGroup>
+            {state === "locked" && (
+              <>
+                <X />
+                Clear
+              </>
+            )}
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
     </Field>
   );
 }

@@ -48,7 +48,7 @@ export default function AlbumCardContent({
         selectedIds={selectedIds}
         jobTracks={job?.tracks}
       />
-      <TrackContainerFooter job={job} onDownloadClick={handleDownload} />
+      <TrackContainerFooter job={job} onDownloadClick={handleDownload} selectedCount={selectedCount} />
     </Card>
   );
 }

@@ -48,7 +48,7 @@ export default function TrackContainerHeader({
       </div>
 
       {isJobActive ? (
-        <div className="flex gap-4 items-center p-4 border-y bg-card w-full font-medium">
+        <div className="flex gap-4 items-center p-4 border-y bg-card w-full font-medium ">
           <div className="flex justify-center gap-1 items-center text-red-500/70">
            
             {job!.failed} Failed

@@ -46,7 +46,7 @@ export default function PlaylistCardContent({ playlist }: { playlist: PlaylistMo
         selectedIds={selectedIds}
         jobTracks={job?.tracks}
       />
-      <TrackContainerFooter job={job} onDownloadClick={handleDownload} />
+      <TrackContainerFooter job={job} onDownloadClick={handleDownload} selectedCount={selectedCount} />
     </Card>
   );
 }

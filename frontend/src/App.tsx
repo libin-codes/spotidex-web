@@ -4,14 +4,12 @@ import { SearchBar } from "./components/SearchBar";
 import { TrackCard } from "./components/TrackCard/TrackCard";
 import { PlaylistCard } from "./components/PlaylistCard/PlaylistCard";
 import { AlbumCard } from "./components/AlbumCard/AlbumCard";
-import TrackItemDemo from "./pages/TrackItemDemo";
 import { Toaster } from "@/components/ui/sonner";
 import { AppHeader } from "./components/AppHeader";
 import { EmptyOutline } from "./components/EmptyOutline";
-
 import type { SpotifyResource } from "./components/types";
-import { Button } from "./components/ui/button";
-import { X } from "lucide-react";
+import TrackItemDemo from "./pages/TrackItemDemo";
+
 
 
 function App() {
@@ -45,13 +43,8 @@ function App() {
       <Toaster />
       <div className="flex h-full flex-col">
         <AppHeader />
-        <SearchBar
-          onClear={handleClear}
-          onPaste={handlePaste}
-          state={searchBarStatus}
-        />
 
-        <div className="min-h-0 flex flex-col gap-4 p-4 h-full">
+        <div className="min-h-0 flex flex-col gap-4 p-4 h-full justify-end ">
           {searchResult == null && <EmptyOutline />}
           {searchResult != null && searchResult.type === "track" && (
             <TrackCard trackId={searchResult.id} />
@@ -62,8 +55,12 @@ function App() {
           {searchResult != null && searchResult.type === "album" && (
             <AlbumCard albumId={searchResult.id} />
           )}
-       
         </div>
+        <SearchBar
+          onClear={handleClear}
+          onPaste={handlePaste}
+          state={searchBarStatus}
+        />
       </div>
     </ThemeProvider>
   );

@@ -7,11 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DownloadButton} from "@/components/DownloadButton";
+import { DownloadButton } from "@/components/DownloadButton";
 import { Calendar, Clock, DiscAlbum, Settings } from "lucide-react";
 import { Button } from "../ui/button";
 import { useTrack } from "@/hooks/use-track";
 import { useDownload } from "@/hooks/use-download";
+import { TrackCardSkeleton } from "./TrackCardSkeleton";
 
 type TrackCardProps = {
   trackId: string;
@@ -23,8 +24,8 @@ export function TrackCard({ trackId}: TrackCardProps) {
 
 
 
-  if (isLoading){
-    return "Loading..."
+  if (isLoading) {
+    return <TrackCardSkeleton />;
   }
 
   if (!track) {
@@ -63,26 +64,30 @@ export function TrackCard({ trackId}: TrackCardProps) {
           className="z-20 aspect-square w-full rounded-2xl"
         />
       </CardContent>
+      <div className="flex flex-col gap-4">
+        <CardHeader className="gap-0 px-0 pl-1">
+          <CardTitle className="truncate">{track.name}</CardTitle>
+          <CardDescription className="truncate">
+            {track.artists.join(", ")}
+          </CardDescription>
+        </CardHeader>
 
-      <CardHeader className="gap-0 px-0 pl-1">
-        <CardTitle className="truncate">{track.name}</CardTitle>
-        <CardDescription className="truncate">
-          {track.artists.join(", ")}
-        </CardDescription>
-      </CardHeader>
+        <CardFooter className="gap-1 px-0"> 
+          {!job && (
+            <Button variant={"secondary"} size={"icon"}>
+              <Settings />
+            </Button>
+          )}
 
-      <CardFooter className="gap-1 px-0">
-        <Button variant={"secondary"} size={"icon"}>
-          <Settings />
-        </Button>
-        <DownloadButton
-          job={job}
-          onClick={() => {
-            download(track);
-          }}
-          className="flex-1"
-        />
-      </CardFooter>
+          <DownloadButton
+            job={job}
+            onClick={() => {
+              download(track);
+            }}
+            className="flex-1"
+          />
+        </CardFooter>
+      </div>
     </Card>
   );
 }

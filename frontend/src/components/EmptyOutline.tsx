@@ -21,7 +21,7 @@ export function EmptyOutline() {
           SPOTIFY DOWNLOADER
         </EmptyTitle>
         <EmptyDescription>
-          Search or paste spotify URL to begin
+          Search or Paste Spotify URL Below to Begin
         </EmptyDescription>
         <EmptyContent>
           
