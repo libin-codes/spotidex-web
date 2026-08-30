@@ -6,17 +6,29 @@ import requests
 import yt_dlp
 from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB, TDRC
 from mutagen.mp3 import MP3
+from ytmusicapi import YTMusic
 
 from app.models import TrackModel
 
 MAX_CONCURRENT = 5
 MAX_RETRIES = 3
 
+_ytmusic = YTMusic()
+
+
+def _resolve_youtube_id(track: TrackModel) -> str:
+    query = f"{track.name} {track.artists[0]}" if track.artists else track.name
+    results = _ytmusic.search(query, filter="songs", limit=1)
+    if not results or "videoId" not in results[0]:
+        raise ValueError(f"No YouTube match found for '{track.name}'")
+    return results[0]["videoId"]
+
 
 def download_track(
     track: TrackModel, output_dir: str, on_progress: Callable[[float], None]
 ) -> None:
-    url = f"https://www.youtube.com/watch?v={track.youtube_id}"
+    youtube_id = _resolve_youtube_id(track)
+    url = f"https://www.youtube.com/watch?v={youtube_id}"
     filepath = os.path.join(output_dir, f"{track.name} - {track.artists[0]}")
 
     def progress_hook(d: Mapping[str, Any]) -> None:

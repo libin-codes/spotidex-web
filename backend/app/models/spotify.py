@@ -9,8 +9,7 @@ class TrackModel(BaseModel):
     artists: List[str]
     album_name: str
     year: str
-    youtube_id: str = ""
-    duration_seconds: int = 0
+    duration_seconds: int
 
 
 class PlaylistModel(BaseModel):
@@ -20,7 +19,7 @@ class PlaylistModel(BaseModel):
     creator: str
     length: int
     tracks: List[TrackModel]
-    duration_seconds: int = 0
+    duration_seconds: int
 
 
 class AlbumModel(BaseModel):
@@ -30,4 +29,4 @@ class AlbumModel(BaseModel):
     artists: List[str]
     length: int
     tracks: List[TrackModel]
-    duration_seconds: int = 0
+    duration_seconds: int

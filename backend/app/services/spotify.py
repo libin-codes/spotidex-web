@@ -49,28 +49,31 @@ class SpotifyService:
         playlist = self.spotify.playlist(playlist_id)
         if not playlist:
             raise ValueError(f"Playlist not found: {playlist_id}")
+        tracks = [self._build_track(item["track"]) for item in playlist["items"]["items"]]
         model = PlaylistModel(
             spotify_id=playlist["id"],
             name=playlist["name"],
             cover_url=playlist["images"][0]["url"],
             length=playlist["items"]["total"],
-            tracks=[self._build_track(item["track"]) for item in playlist["items"]["items"]],
+            tracks=tracks,
             creator=playlist["owner"]["display_name"],
+            duration_seconds = sum(t.duration_seconds for t in tracks)
         )
-        model.duration_seconds = sum(t.duration_seconds for t in model.tracks)
         return model
 
     async def get_album(self, album_id: str) -> AlbumModel:
         album = self.spotify.album(album_id)
         if not album:
             raise ValueError(f"Album not found: {album_id}")
+
+        tracks = [self._build_track(item["track"]) for item in album["items"]["items"]]
         model = AlbumModel(
             spotify_id=album["id"],
             name=album["name"],
             cover_url=album["images"][0]["url"],
             length=album["tracks"]["total"],
             artists=[artist["name"] for artist in album["artists"]],
-            tracks=[self._build_album_track(item, album) for item in album["tracks"]["items"]],
+            tracks=tracks,
+            duration_seconds = sum(t.duration_seconds for t in tracks)
         )
-        model.duration_seconds = sum(t.duration_seconds for t in model.tracks)
         return model
