@@ -11,7 +11,6 @@ const mockTrack: TrackModel = {
   artists: ["Queen"],
   album_name: "A Night at the Opera",
   year: "1975",
-  youtube_id: "",
   duration_seconds: 354,
 };
 

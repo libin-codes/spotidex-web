@@ -17,6 +17,11 @@ async def get_track(track_id: str) -> TrackModel:
     return await spotify.get_track(track_id)
 
 
+@router.get("/search/tracks", response_model=list[TrackModel])
+async def search_tracks(query: str) -> list[TrackModel]:
+    return await spotify.search_tracks(query)
+
+
 @router.get("/playlist/{playlist_id}", response_model=PlaylistModel)
 async def get_playlist(playlist_id: str) -> PlaylistModel:
     return await spotify.get_playlist(playlist_id)

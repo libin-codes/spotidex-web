@@ -45,6 +45,20 @@ class SpotifyService:
             raise ValueError(f"Track not found: {track_id}")
         return self._build_track(track)
 
+    async def search_tracks(self, query: str, limit: int = 8) -> list[TrackModel]:
+        cleaned_query = query.strip()
+        if not cleaned_query:
+            return []
+
+        results = self.spotify.search(
+            q=cleaned_query,
+            type="track",
+            limit=limit,
+        )
+
+        tracks = results.get("tracks", {}).get("items", [])
+        return [self._build_track(track) for track in tracks]
+
     async def get_playlist(self, playlist_id: str) -> PlaylistModel:
         playlist = self.spotify.playlist(playlist_id)
         if not playlist:

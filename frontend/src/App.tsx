@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AppHeader } from "./components/AppHeader";
 import { EmptyOutline } from "./components/EmptyOutline";
 import type { SpotifyResource } from "./components/types";
-import TrackItemDemo from "./pages/TrackItemDemo";
+import type { TrackModel } from "@/api/types";
 
 
 
@@ -38,6 +38,11 @@ function App() {
     setSearchBarStatus("idle");
   };
 
+  const handleTrackSelect = (track: TrackModel) => {
+    setSearchResult({ type: "track", id: track.spotify_id });
+    setSearchBarStatus("locked");
+  };
+
   return (
     <ThemeProvider>
       <Toaster />
@@ -59,6 +64,7 @@ function App() {
         <SearchBar
           onClear={handleClear}
           onPaste={handlePaste}
+          onTrackSelect={handleTrackSelect}
           state={searchBarStatus}
         />
       </div>

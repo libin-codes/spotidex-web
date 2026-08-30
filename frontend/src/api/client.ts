@@ -8,6 +8,15 @@ export async function fetchTrack(trackId: string): Promise<TrackModel> {
   return res.json();
 }
 
+export async function searchTracks(query: string): Promise<TrackModel[]> {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return [];
+
+  const res = await fetch(`${API_BASE}/search/tracks?query=${encodeURIComponent(trimmedQuery)}`);
+  if (!res.ok) throw new Error(`Failed to search tracks: ${res.statusText}`);
+  return res.json();
+}
+
 export async function downloadTrack(
   track: TrackModel,
 ): Promise<DownloadResponse> {
