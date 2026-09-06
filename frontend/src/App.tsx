@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ThemeProvider } from "./contexts/theme-provider";
-import { SearchBar } from "./components/SearchBar";
+import { SearchBar } from "./components/SearchBar/SearchBar";
 import { TrackCard } from "./components/TrackCard/TrackCard";
 import { PlaylistCard } from "./components/PlaylistCard/PlaylistCard";
 import { AlbumCard } from "./components/AlbumCard/AlbumCard";
@@ -24,23 +24,18 @@ function App() {
   const [searchResult, setSearchResult] = useState<SpotifyResource | null>(
     null,
   );
-  const [searchBarStatus, setSearchBarStatus] = useState<
-    "idle" | "loading" | "locked"
-  >("idle");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handlePaste = (resource: SpotifyResource) => {
     setSearchResult(resource);
-    setSearchBarStatus("locked")
   };
 
   const handleClear = () => {
     setSearchResult(null);
-    setSearchBarStatus("idle");
   };
 
   const handleTrackSelect = (track: TrackModel) => {
     setSearchResult({ type: "track", id: track.spotify_id });
-    setSearchBarStatus("locked");
   };
 
   return (
@@ -52,20 +47,30 @@ function App() {
         <div className="min-h-0 flex flex-col gap-4 p-4 h-full justify-end ">
           {searchResult == null && <EmptyOutline />}
           {searchResult != null && searchResult.type === "track" && (
-            <TrackCard trackId={searchResult.id} />
+            <TrackCard
+              trackId={searchResult.id}
+              onLoadingChange={setIsLoading}
+            />
           )}
           {searchResult != null && searchResult.type === "playlist" && (
-            <PlaylistCard playlistId={searchResult.id} />
+            <PlaylistCard
+              playlistId={searchResult.id}
+              onLoadingChange={setIsLoading}
+            />
           )}
           {searchResult != null && searchResult.type === "album" && (
-            <AlbumCard albumId={searchResult.id} />
+            <AlbumCard
+              albumId={searchResult.id}
+              onLoadingChange={setIsLoading}
+            />
           )}
         </div>
         <SearchBar
-          onClear={handleClear}
           onPaste={handlePaste}
-          onTrackSelect={handleTrackSelect}
-          state={searchBarStatus}
+          onSelect={handleTrackSelect}
+          onClear={handleClear}
+          isLoading={isLoading}
+          disabled={searchResult != null}
         />
       </div>
     </ThemeProvider>

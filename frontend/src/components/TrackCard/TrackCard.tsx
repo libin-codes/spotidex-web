@@ -13,16 +13,20 @@ import { Button } from "../ui/button";
 import { useTrack } from "@/hooks/use-track";
 import { useDownload } from "@/hooks/use-download";
 import { TrackCardSkeleton } from "./TrackCardSkeleton";
+import { useEffect } from "react";
 
 type TrackCardProps = {
   trackId: string;
+  onLoadingChange?: (isLoading: boolean) => void;
 };
 
-export function TrackCard({ trackId}: TrackCardProps) {
+export function TrackCard({ trackId, onLoadingChange }: TrackCardProps) {
   const { data: track, isLoading } = useTrack(trackId);
   const {download, job} = useDownload()
 
-
+  useEffect(() => {
+    onLoadingChange?.(isLoading);
+  }, [isLoading, onLoadingChange]);
 
   if (isLoading) {
     return <TrackCardSkeleton />;
