@@ -80,7 +80,7 @@ export function SearchBar({
 
   return (
     <Field className="pb-3 px-3">
-      <InputGroup ref={anchorRef} className="h-13 rounded-full">
+      <InputGroup ref={anchorRef} className="h-14 rounded-full">
         <InputGroupInput
           className="pl-5 text-md disabled:opacity-80"
           type="search"

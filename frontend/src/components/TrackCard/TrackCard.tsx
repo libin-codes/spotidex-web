@@ -42,7 +42,7 @@ export function TrackCard({ trackId, onLoadingChange }: TrackCardProps) {
   const formatedDuration = `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 
   return (
-    <Card className="max-w-sm p-4" size="sm">
+    <Card className="max-w-sm p-4 " size="sm">
       <CardContent className="p-0 space-y-4">
         <div className="flex items-center gap-2 justify-between px-1">
           <div className="flex min-w-0 items-center gap-2 overflow-hidden">

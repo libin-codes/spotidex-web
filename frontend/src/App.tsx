@@ -44,7 +44,7 @@ function App() {
       <div className="flex h-full flex-col">
         <AppHeader />
 
-        <div className="min-h-0 flex flex-col gap-4 p-4 h-full justify-end ">
+        <div className="min-h-0 flex flex-col gap-4 p-4 h-full justify-center items-center ">
           {searchResult == null && <EmptyOutline />}
           {searchResult != null && searchResult.type === "track" && (
             <TrackCard
