@@ -63,19 +63,36 @@ export function SearchBar({
     throw new Error("Invalid Spotify URL");
   }
 
-  async function handleButtonClick() {
-    if (searchInput === "") {
-      const url = await navigator.clipboard.readText();
-      if (isValidSpotifyURL(url)) {
-        onPaste(getSpotifyResource(url));
-        setSearchInput(url);
-      } else {
-        toast("Invalid Spotify URL", { position: "top-center" });
-      }
+  function handlePastedText(text: string) {
+    if (isValidSpotifyURL(text)) {
+      onPaste(getSpotifyResource(text));
+      setSearchInput(text);
     } else {
+      toast("Invalid Spotify URL", { position: "top-center" });
+    }
+  }
+
+  async function handleButtonClick() {
+    if (searchInput !== "") {
       setSearchInput("");
       onClear();
+      return;
     }
+
+    try {
+      const url = await navigator.clipboard?.readText();
+      if (url) {
+        handlePastedText(url);
+        return;
+      }
+    } catch {
+      // Clipboard read not allowed; fall back to manual paste below.
+    }
+
+    anchorRef.current?.querySelector("input")?.focus();
+    toast("Couldn't read clipboard — long-press the search box and tap Paste.", {
+      position: "top-center",
+    });
   }
 
   return (
@@ -92,6 +109,10 @@ export function SearchBar({
             setOpen(true);
           }}
           onFocus={() => searchInput !== "" && setOpen(true)}
+          onPaste={(e) => {
+            const text = e.clipboardData.getData("text");
+            if (text) handlePastedText(text);
+          }}
         />
         <InputGroupAddon align="inline-end">
           <InputGroupButton

@@ -28,28 +28,25 @@ export function SearchSuggestions({
   onSelect,
 }: SearchSuggestionsProps) {
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
+    <Popover open={open} onOpenChange={onOpenChange} >
       <PopoverContent
         side="top"
         sideOffset={12}
         align="center"
         anchor={anchor}
         initialFocus={false}
+        hidden={isFetching}
         className="flex max-h-96 w-(--anchor-width) flex-col overflow-y-auto rounded-3xl p-1.5"
       >
-        {tracks.length === 0 && (
-          <div className=" text-center">
-            
-            {isFetching ? "Searching..." : "No tracks found."}
-          </div>
-        )}
+    
+
         <ItemGroup className="gap-0 flex-col-reverse overflow-y-auto">
           {tracks.map((track) => (
             <Item
               key={track.spotify_id}
               variant="default"
               render={<button type="button" />}
-              className="cursor-pointer p-0 mb-3 mt-3 border-0 hover:bg-accent hover:text-accent-foreground flex-nowrap"
+              className="cursor-pointer p-0 px-2 mb-3 mt-3 border-0 hover:bg-accent hover:text-accent-foreground flex-nowrap"
               onClick={() => {
                 onSelect(track);
                 onOpenChange(false);
