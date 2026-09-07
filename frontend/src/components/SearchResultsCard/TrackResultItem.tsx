@@ -24,7 +24,7 @@ export function TrackResultItem({ track, onClick }: TrackResultItemProps) {
       <ItemMedia variant="image">
         <img src={track.cover_url} alt="Cover Art" />
       </ItemMedia>
-      <ItemContent className="min-w-0 gap-0 pt-0 z-10">
+      <ItemContent className="min-w-0 gap-0 pt-0 z-10 text-left">
         <ItemTitle className="line-clamp-1">{track.name}</ItemTitle>
         <ItemDescription className="line-clamp-1">
           {track.artists.join(", ")}

@@ -16,7 +16,7 @@ export function SearchResultsHeader({ query }: SearchResultsHeaderProps) {
           <CardDescription className="truncate">{`search results for query "${query}"`}</CardDescription>
         </div>
       </div>
-      <div className="px-2 w-full border-y py-4">
+      <div className="px-2 w-full border-b pb-4">
         <TabsList className="w-full">
           <TabsTrigger value="tracks">Tracks</TabsTrigger>
           <TabsTrigger value="playlists">Playlists</TabsTrigger>
