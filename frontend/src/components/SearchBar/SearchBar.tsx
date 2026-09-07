@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Clipboard, Loader, X } from "lucide-react";
+import { Clipboard, Loader, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { Field } from "../ui/field";
 import {
@@ -8,37 +8,29 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "../ui/input-group";
-import { SearchSuggestions } from "./SearchSuggestions";
-import { useTrackSearch } from "@/hooks/use-track-search";
-import { useDebounce } from "@/hooks/use-debounce";
-import type { TrackModel } from "@/api/types";
 import type { SpotifyResource } from "../types";
 
 type SearchBarProps = {
   onPaste: (resource: SpotifyResource) => void;
-  onSelect: (track: TrackModel) => void;
+  onSearch: (query: string) => void;
   onClear: () => void;
+  hasResults: boolean;
   isLoading: boolean;
   disabled: boolean;
 };
 
 export function SearchBar({
   onPaste,
-  onSelect,
+  onSearch,
   onClear,
+  hasResults,
   isLoading,
   disabled,
 }: SearchBarProps) {
   const [searchInput, setSearchInput] = useState("");
-  const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  const isSpotifyUrl = isValidSpotifyURL(searchInput);
-  const debouncedQuery = useDebounce(isSpotifyUrl ? "" : searchInput, 300);
-  const { data: tracks = [], isFetching } = useTrackSearch(debouncedQuery);
-  const hasActiveSearch = debouncedQuery.trim().length > 0;
-
-  const busy = isLoading || isFetching;
+  const busy = isLoading;
 
   function isValidSpotifyURL(url: string): boolean {
     return (
@@ -56,7 +48,7 @@ export function SearchBar({
 
     if (match) {
       return {
-        type: match[1] as SpotifyResource["type"],
+        type: match[1] as "track" | "playlist" | "album",
         id: match[2],
       };
     }
@@ -72,27 +64,51 @@ export function SearchBar({
     }
   }
 
-  async function handleButtonClick() {
-    if (searchInput !== "") {
-      setSearchInput("");
-      onClear();
-      return;
+  async function safeReadClipboard(): Promise<string | null> {
+    if (!navigator.clipboard) {
+      return null;
+    }
+
+    if ("permissions" in navigator) {
+      try {
+        const status = await navigator.permissions.query({
+          name: "clipboard-read" as PermissionName,
+        });
+        if (status.state === "denied") {
+          return null;
+        }
+      } catch {
+        // Firefox/Safari don't support clipboard-read query; proceed to read.
+      }
     }
 
     try {
-      const url = await navigator.clipboard?.readText();
+      return await navigator.clipboard.readText();
+    } catch {
+      return null;
+    }
+  }
+
+  async function handleButtonClick() {
+    if (searchInput === "") {
+      const url = await safeReadClipboard();
       if (url) {
         handlePastedText(url);
-        return;
+      } else {
+        anchorRef.current?.querySelector("input")?.focus();
+        toast("Couldn't read clipboard — long-press the search box and tap Paste.", {
+          position: "top-center",
+        });
       }
-    } catch {
-      // Clipboard read not allowed; fall back to manual paste below.
+      return;
     }
 
-    anchorRef.current?.querySelector("input")?.focus();
-    toast("Couldn't read clipboard — long-press the search box and tap Paste.", {
-      position: "top-center",
-    });
+    if (hasResults) {
+      setSearchInput("");
+      onClear();
+    } else {
+      onSearch(searchInput.trim());
+    }
   }
 
   return (
@@ -106,9 +122,7 @@ export function SearchBar({
           disabled={isLoading || disabled}
           onChange={(e) => {
             setSearchInput(e.target.value);
-            setOpen(true);
           }}
-          onFocus={() => searchInput !== "" && setOpen(true)}
           onPaste={(e) => {
             const text = e.clipboardData.getData("text");
             if (text) handlePastedText(text);
@@ -123,7 +137,9 @@ export function SearchBar({
                 ? "secondary"
                 : searchInput === ""
                   ? "default"
-                  : "destructive"
+                  : hasResults
+                    ? "destructive"
+                    : "default"
             }
             disabled={busy}
             onClick={handleButtonClick}
@@ -140,23 +156,21 @@ export function SearchBar({
                 Loading
               </>
             )}
-            {searchInput !== "" && !busy && (
+            {searchInput !== "" && hasResults && !busy && (
               <>
                 <X />
                 Clear
               </>
             )}
+            {searchInput !== "" && !hasResults && !busy && (
+              <>
+                <Search />
+                Search
+              </>
+            )}
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
-      <SearchSuggestions
-        open={open && searchInput !== "" && hasActiveSearch && !isSpotifyUrl}
-        onOpenChange={setOpen}
-        anchor={anchorRef}
-        tracks={tracks}
-        isFetching={isFetching}
-        onSelect={onSelect}
-      />
     </Field>
   );
 }

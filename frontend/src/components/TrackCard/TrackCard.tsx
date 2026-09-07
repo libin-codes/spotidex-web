@@ -8,8 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DownloadButton } from "@/components/DownloadButton";
-import { Calendar, Clock, DiscAlbum, Settings } from "lucide-react";
-import { Button } from "../ui/button";
+import { Calendar, Clock, DiscAlbum } from "lucide-react";
 import { useTrack } from "@/hooks/use-track";
 import { useDownload } from "@/hooks/use-download";
 import { TrackCardSkeleton } from "./TrackCardSkeleton";
@@ -77,11 +76,7 @@ export function TrackCard({ trackId, onLoadingChange }: TrackCardProps) {
         </CardHeader>
 
         <CardFooter className="gap-1 px-0"> 
-          {!job && (
-            <Button variant={"secondary"} size={"icon"}>
-              <Settings />
-            </Button>
-          )}
+      
 
           <DownloadButton
             job={job}

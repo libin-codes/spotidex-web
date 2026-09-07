@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function TrackCardSkeleton() {
   return (
-    <Card className="max-w-sm p-4" size="sm">
+    <Card className="w-sm p-4" size="sm">
       <CardContent className="p-0 space-y-4">
         <div className="flex items-center justify-between gap-2 px-1">
           <div className="flex items-center gap-2">
