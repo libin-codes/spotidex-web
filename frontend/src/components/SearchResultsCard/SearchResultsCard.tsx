@@ -37,7 +37,7 @@ export default function SearchResultsCard({
   return (
     <Card className="w-full h-full min-h-0 no-scrollbar p-0 gap-0" size="sm">
       <Tabs defaultValue="tracks" className="h-full gap-0">
-        <SearchResultsHeader query={query} />
+        <SearchResultsHeader />
 
         <CardContent className="flex-1 h-full p-0 min-h-0">
           <TabsContent value="tracks" className="h-full">

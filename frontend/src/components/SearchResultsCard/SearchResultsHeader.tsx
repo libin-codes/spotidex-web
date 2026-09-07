@@ -1,23 +1,18 @@
-import { CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Search } from "lucide-react";
+import { CardHeader, CardTitle } from "../ui/card";
 import { TabsList, TabsTrigger } from "../ui/tabs";
 
-type SearchResultsHeaderProps = {
-  query: string;
-};
-
-export function SearchResultsHeader({ query }: SearchResultsHeaderProps) {
+export function SearchResultsHeader() {
   return (
-    <CardHeader className="sticky top-0 z-10 flex flex-col gap-4 p-0 pt-4 pb-2 w-full">
-      <div className="px-4 flex gap-4">
-        <div className="w-full">
-          <CardTitle className="truncate flex justify-between w-full items-center">
-            {"Search Results"}
-          </CardTitle>
-          <CardDescription className="truncate">{`search results for query "${query}"`}</CardDescription>
+    <CardHeader className="sticky top-0 z-10 flex flex-col p-0 pt-4  w-full">
+      <div className="px-4 flex w-full">
+        <div className="w-full flex gap-2 items-center justify-center">
+          <Search size={16} />
+          <CardTitle className="">{"Search Results"}</CardTitle>
         </div>
       </div>
-      <div className="px-2 w-full border-b pb-4">
-        <TabsList className="w-full">
+      <div className=" w-full ">
+        <TabsList className="w-full p-0 border-b-3 pb-px mb-2" variant={"line"}>
           <TabsTrigger value="tracks">Tracks</TabsTrigger>
           <TabsTrigger value="playlists">Playlists</TabsTrigger>
           <TabsTrigger value="albums">Albums</TabsTrigger>
