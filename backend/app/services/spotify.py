@@ -1,6 +1,6 @@
 import asyncio
 from spotipy import Spotify, SpotifyClientCredentials
-from app.models import TrackModel, PlaylistModel, AlbumModel
+from app.models import TrackModel, PlaylistModel, AlbumModel, PlaylistSearchResult, AlbumSearchResult, SearchResults
 
 
 class SpotifyService:
@@ -16,26 +16,45 @@ class SpotifyService:
         self.spotify = Spotify(auth_manager=auth_manager)
 
     def _build_track(self, track) -> TrackModel:
-        duration_ms = int(track.get("duration_ms", 0))
+        duration_ms = int(track.get("duration_ms") or 0)
+        album = track.get("album") or {}
+        images = album.get("images") or []
+        cover_url = images[0].get("url", "") if images and isinstance(images[0], dict) else ""
+        artists = [
+            artist.get("name", "")
+            for artist in (track.get("artists") or [])
+            if artist and isinstance(artist, dict)
+        ]
+        release_date = album.get("release_date") or ""
+        year = release_date[:4] if release_date else ""
         return TrackModel(
-            spotify_id=track["id"],
-            name=track["name"],
-            cover_url=track["album"]["images"][0]["url"],
-            artists=[artist["name"] for artist in track["artists"]],
-            album_name=track["album"]["name"],
-            year=track["album"]["release_date"][:4],
+            spotify_id=track.get("id", ""),
+            name=track.get("name", ""),
+            cover_url=cover_url,
+            artists=artists,
+            album_name=album.get("name", ""),
+            year=year,
             duration_seconds=max(0, duration_ms // 1000),
         )
 
     def _build_album_track(self, track, album) -> TrackModel:
-        duration_ms = int(track.get("duration_ms", 0))
+        duration_ms = int(track.get("duration_ms") or 0)
+        images = (album or {}).get("images") or []
+        cover_url = images[0].get("url", "") if images and isinstance(images[0], dict) else ""
+        artists = [
+            artist.get("name", "")
+            for artist in (track.get("artists") or [])
+            if artist and isinstance(artist, dict)
+        ]
+        release_date = (album or {}).get("release_date") or ""
+        year = release_date[:4] if release_date else ""
         return TrackModel(
-            spotify_id=track["id"],
-            name=track["name"],
-            cover_url=album["images"][0]["url"],
-            artists=[artist["name"] for artist in track["artists"]],
-            album_name=album["name"],
-            year=album["release_date"][:4],
+            spotify_id=track.get("id", ""),
+            name=track.get("name", ""),
+            cover_url=cover_url,
+            artists=artists,
+            album_name=(album or {}).get("name", ""),
+            year=year,
             duration_seconds=max(0, duration_ms // 1000),
         )
 
@@ -56,22 +75,91 @@ class SpotifyService:
             limit=limit,
         )
 
-        tracks = results.get("tracks", {}).get("items", [])
-        return [self._build_track(track) for track in tracks]
+        tracks = (results.get("tracks") or {}).get("items") or []
+        return [self._build_track(track) for track in tracks if track is not None]
+
+    def _build_playlist_search_result(self, playlist) -> PlaylistSearchResult:
+        images = playlist.get("images") or []
+        cover_url = images[0].get("url", "") if images and isinstance(images[0], dict) else ""
+        owner = playlist.get("owner") or {}
+        creator = owner.get("display_name") or owner.get("id") or ""
+        total_tracks = int((playlist.get("tracks") or {}).get("total") or 0)
+        return PlaylistSearchResult(
+            spotify_id=playlist.get("id", ""),
+            name=playlist.get("name", ""),
+            cover_url=cover_url,
+            creator=creator,
+            total_tracks=total_tracks,
+        )
+
+    def _build_album_search_result(self, album) -> AlbumSearchResult:
+        images = album.get("images") or []
+        cover_url = images[0].get("url", "") if images and isinstance(images[0], dict) else ""
+        artists = [
+            artist.get("name", "")
+            for artist in (album.get("artists") or [])
+            if artist and isinstance(artist, dict)
+        ]
+        total_tracks = int(album.get("total_tracks") or (album.get("tracks") or {}).get("total") or 0)
+        return AlbumSearchResult(
+            spotify_id=album.get("id", ""),
+            name=album.get("name", ""),
+            cover_url=cover_url,
+            artists=artists,
+            total_tracks=total_tracks,
+        )
+
+    async def search(self, query: str, limit: int = 8) -> SearchResults:
+        cleaned_query = query.strip()
+        if not cleaned_query:
+            return SearchResults(tracks=[], playlists=[], albums=[])
+
+        results = self.spotify.search(
+            q=cleaned_query,
+            type="track,playlist,album",
+            limit=limit,
+        ) or {}
+
+        tracks = [
+            self._build_track(t)
+            for t in (results.get("tracks") or {}).get("items") or []
+            if t is not None
+        ]
+        playlists = [
+            self._build_playlist_search_result(p)
+            for p in (results.get("playlists") or {}).get("items") or []
+            if p is not None
+        ]
+        albums = [
+            self._build_album_search_result(a)
+            for a in (results.get("albums") or {}).get("items") or []
+            if a is not None
+        ]
+
+        return SearchResults(tracks=tracks, playlists=playlists, albums=albums)
 
     async def get_playlist(self, playlist_id: str) -> PlaylistModel:
         playlist = self.spotify.playlist(playlist_id)
         if not playlist:
             raise ValueError(f"Playlist not found: {playlist_id}")
-        tracks = [self._build_track(item["track"]) for item in playlist["items"]["items"]]
+        items = (playlist.get("items") or {}).get("items") or (playlist.get("tracks") or {}).get("items") or []
+        tracks = [
+            self._build_track(item["track"])
+            for item in items
+            if item and item.get("track")
+        ]
+        images = playlist.get("images") or []
+        cover_url = images[0].get("url", "") if images and isinstance(images[0], dict) else ""
+        owner = playlist.get("owner") or {}
+        creator = owner.get("display_name") or owner.get("id") or ""
         model = PlaylistModel(
             spotify_id=playlist["id"],
-            name=playlist["name"],
-            cover_url=playlist["images"][0]["url"],
-            length=playlist["items"]["total"],
+            name=playlist.get("name", ""),
+            cover_url=cover_url,
+            length=(playlist.get("items") or {}).get("total") or len(tracks),
             tracks=tracks,
-            creator=playlist["owner"]["display_name"],
-            duration_seconds = sum(t.duration_seconds for t in tracks)
+            creator=creator,
+            duration_seconds=sum(t.duration_seconds for t in tracks),
         )
         return model
 
@@ -80,14 +168,26 @@ class SpotifyService:
         if not album:
             raise ValueError(f"Album not found: {album_id}")
 
-        tracks = [self._build_track(item["track"]) for item in album["items"]["items"]]
+        items = (album.get("items") or {}).get("items") or (album.get("tracks") or {}).get("items") or []
+        tracks = [
+            self._build_track(item["track"]) if item.get("track") else self._build_album_track(item, album)
+            for item in items
+            if item
+        ]
+        images = album.get("images") or []
+        cover_url = images[0].get("url", "") if images and isinstance(images[0], dict) else ""
+        artists = [
+            artist.get("name", "")
+            for artist in (album.get("artists") or [])
+            if artist and isinstance(artist, dict)
+        ]
         model = AlbumModel(
             spotify_id=album["id"],
-            name=album["name"],
-            cover_url=album["images"][0]["url"],
-            length=album["tracks"]["total"],
-            artists=[artist["name"] for artist in album["artists"]],
+            name=album.get("name", ""),
+            cover_url=cover_url,
+            length=(album.get("tracks") or {}).get("total") or len(tracks),
+            artists=artists,
             tracks=tracks,
-            duration_seconds = sum(t.duration_seconds for t in tracks)
+            duration_seconds=sum(t.duration_seconds for t in tracks),
         )
         return model

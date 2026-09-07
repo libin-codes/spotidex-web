@@ -11,6 +11,11 @@ export function SearchResultsCardSkeleton() {
             <Skeleton className="h-4 w-48" />
           </div>
         </div>
+        <div className="px-4 flex gap-2">
+          <Skeleton className="h-8 w-20 rounded-full" />
+          <Skeleton className="h-8 w-20 rounded-full" />
+          <Skeleton className="h-8 w-20 rounded-full" />
+        </div>
       </CardHeader>
       <CardContent className="flex-1 h-full p-0 min-h-0">
         <div className="flex flex-col gap-0">
@@ -24,6 +29,7 @@ export function SearchResultsCardSkeleton() {
                 <Skeleton className="h-4 w-3/5" />
                 <Skeleton className="h-3.5 w-2/5" />
               </div>
+              <Skeleton className="size-4 rounded shrink-0" />
             </div>
           ))}
         </div>

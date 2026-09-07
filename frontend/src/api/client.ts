@@ -1,4 +1,4 @@
-import type { TrackModel, PlaylistModel, AlbumModel, DownloadResponse } from "./types";
+import type { TrackModel, PlaylistModel, AlbumModel, DownloadResponse, SearchResults } from "./types";
 
 const API_BASE = "/api";
 
@@ -14,6 +14,15 @@ export async function searchTracks(query: string): Promise<TrackModel[]> {
 
   const res = await fetch(`${API_BASE}/search/tracks?query=${encodeURIComponent(trimmedQuery)}`);
   if (!res.ok) throw new Error(`Failed to search tracks: ${res.statusText}`);
+  return res.json();
+}
+
+export async function search(query: string): Promise<SearchResults> {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return { tracks: [], playlists: [], albums: [] };
+
+  const res = await fetch(`${API_BASE}/search?query=${encodeURIComponent(trimmedQuery)}`);
+  if (!res.ok) throw new Error(`Failed to search: ${res.statusText}`);
   return res.json();
 }
 

@@ -1,4 +1,4 @@
-from app.models.spotify import TrackModel, PlaylistModel, AlbumModel
+from app.models.spotify import TrackModel, PlaylistModel, AlbumModel, PlaylistSearchResult, AlbumSearchResult, SearchResults
 from app.models.download import (
     TrackDownloadStatus,
     TrackDownloadProgress,
@@ -12,6 +12,9 @@ __all__ = [
     "TrackModel",
     "PlaylistModel",
     "AlbumModel",
+    "PlaylistSearchResult",
+    "AlbumSearchResult",
+    "SearchResults",
     "TrackDownloadStatus",
     "TrackDownloadProgress",
     "DownloadJobType",

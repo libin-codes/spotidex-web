@@ -2,7 +2,7 @@ import os
 
 from fastapi import APIRouter
 
-from app.models import TrackModel, PlaylistModel, AlbumModel
+from app.models import TrackModel, PlaylistModel, AlbumModel, SearchResults
 from app.services.spotify import SpotifyService
 
 router = APIRouter(tags=["spotify"])
@@ -20,6 +20,11 @@ async def get_track(track_id: str) -> TrackModel:
 @router.get("/search/tracks", response_model=list[TrackModel])
 async def search_tracks(query: str) -> list[TrackModel]:
     return await spotify.search_tracks(query)
+
+
+@router.get("/search", response_model=SearchResults)
+async def search(query: str) -> SearchResults:
+    return await spotify.search(query)
 
 
 @router.get("/playlist/{playlist_id}", response_model=PlaylistModel)

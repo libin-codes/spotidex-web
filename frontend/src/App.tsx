@@ -55,7 +55,7 @@ function App() {
           {resource?.type === "search" && (
             <SearchResultsCard
               query={resource.query}
-              onSelect={(track) => setResource({ type: "track", id: track.spotify_id })}
+              onSelect={(selected) => setResource(selected)}
               onLoadingChange={setIsLoading}
             />
           )}

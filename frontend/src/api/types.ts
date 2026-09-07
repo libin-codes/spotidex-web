@@ -60,3 +60,25 @@ export type AlbumModel = {
 export type DownloadResponse = {
   job_id: string;
 };
+
+export type PlaylistSearchResult = {
+  spotify_id: string;
+  name: string;
+  cover_url: string;
+  creator: string;
+  total_tracks: number;
+};
+
+export type AlbumSearchResult = {
+  spotify_id: string;
+  name: string;
+  cover_url: string;
+  artists: string[];
+  total_tracks: number;
+};
+
+export type SearchResults = {
+  tracks: TrackModel[];
+  playlists: PlaylistSearchResult[];
+  albums: AlbumSearchResult[];
+};
