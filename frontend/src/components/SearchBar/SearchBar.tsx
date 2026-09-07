@@ -1,6 +1,5 @@
-import { useRef, useState } from "react";
-import { Clipboard, Loader, Search, X } from "lucide-react";
-import { toast } from "sonner";
+import {useState } from "react";
+import {Loader, Search, X } from "lucide-react";
 import { Field } from "../ui/field";
 import {
   InputGroup,
@@ -28,9 +27,6 @@ export function SearchBar({
   disabled,
 }: SearchBarProps) {
   const [searchInput, setSearchInput] = useState("");
-  const anchorRef = useRef<HTMLDivElement>(null);
-
-  const busy = isLoading;
 
   function isValidSpotifyURL(url: string): boolean {
     return (
@@ -59,50 +55,10 @@ export function SearchBar({
     if (isValidSpotifyURL(text)) {
       onPaste(getSpotifyResource(text));
       setSearchInput(text);
-    } else {
-      toast("Invalid Spotify URL", { position: "top-center" });
     }
   }
 
-  async function safeReadClipboard(): Promise<string | null> {
-    if (!navigator.clipboard) {
-      return null;
-    }
-
-    if ("permissions" in navigator) {
-      try {
-        const status = await navigator.permissions.query({
-          name: "clipboard-read" as PermissionName,
-        });
-        if (status.state === "denied") {
-          return null;
-        }
-      } catch {
-        // Firefox/Safari don't support clipboard-read query; proceed to read.
-      }
-    }
-
-    try {
-      return await navigator.clipboard.readText();
-    } catch {
-      return null;
-    }
-  }
-
-  async function handleButtonClick() {
-    if (searchInput === "") {
-      const url = await safeReadClipboard();
-      if (url) {
-        handlePastedText(url);
-      } else {
-        anchorRef.current?.querySelector("input")?.focus();
-        toast("Couldn't read clipboard — long-press the search box and tap Paste.", {
-          position: "top-center",
-        });
-      }
-      return;
-    }
-
+  function handleButtonClick() {
     if (hasResults) {
       setSearchInput("");
       onClear();
@@ -113,7 +69,7 @@ export function SearchBar({
 
   return (
     <Field className="pb-3 px-3">
-      <InputGroup ref={anchorRef} className="h-14 rounded-full">
+      <InputGroup  className="h-14 rounded-full">
         <InputGroupInput
           className="pl-5 text-md disabled:opacity-80"
           type="search"
@@ -125,7 +81,7 @@ export function SearchBar({
           }}
           onPaste={(e) => {
             const text = e.clipboardData.getData("text");
-            if (text) handlePastedText(text);
+            if (text)  handlePastedText(text);
           }}
         />
         <InputGroupAddon align="inline-end">
@@ -133,7 +89,7 @@ export function SearchBar({
             size="sm"
             className="w-24"
             variant={
-              busy
+              isLoading
                 ? "secondary"
                 : searchInput === ""
                   ? "default"
@@ -141,28 +97,26 @@ export function SearchBar({
                     ? "destructive"
                     : "default"
             }
-            disabled={busy}
-            onClick={handleButtonClick}
+            disabled={isLoading || searchInput===""}
+            onClick={()=>{
+              handleButtonClick()
+           
+            }}
           >
-            {searchInput === "" && !busy && (
-              <>
-                <Clipboard />
-                Paste
-              </>
-            )}
-            {busy && (
+       
+            {isLoading && (
               <>
                 <Loader className="animate-spin" />
                 Loading
               </>
             )}
-            {searchInput !== "" && hasResults && !busy && (
+            {searchInput !== "" && hasResults && !isLoading && (
               <>
                 <X />
                 Clear
               </>
             )}
-            {searchInput !== "" && !hasResults && !busy && (
+            {!hasResults && !isLoading && (
               <>
                 <Search />
                 Search
