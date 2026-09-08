@@ -49,32 +49,54 @@ export function SearchBar({
     }
   }
 
-  function isValidSpotifyURL(url: string): boolean {
-    return (
-      url.includes("open.spotify.com") &&
-      (url.includes("/track/") ||
-        url.includes("/playlist/") ||
-        url.includes("/album/"))
+  function parseSpotifyURL(input: string): SpotifyResource | null {
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+
+    const uriMatch = trimmed.match(
+      /^spotify:(track|playlist|album):([A-Za-z0-9]+)/i
     );
-  }
-
-  function getSpotifyResource(url: string): SpotifyResource {
-    const { pathname } = new URL(url);
-
-    const match = pathname.match(/^\/(track|playlist|album)\/([A-Za-z0-9]+)/);
-
-    if (match) {
+    if (uriMatch) {
       return {
-        type: match[1] as "track" | "playlist" | "album",
-        id: match[2],
+        type: uriMatch[1].toLowerCase() as "track" | "playlist" | "album",
+        id: uriMatch[2],
       };
     }
-    throw new Error("Invalid Spotify URL");
+
+    let urlString = trimmed;
+    if (/^open\.spotify\.com/i.test(urlString)) {
+      urlString = `https://${urlString}`;
+    }
+
+    try {
+      const url = new URL(urlString);
+      if (
+        url.hostname !== "open.spotify.com" &&
+        !url.hostname.endsWith(".spotify.com")
+      ) {
+        return null;
+      }
+
+      const match = url.pathname.match(
+        /\/(track|playlist|album)\/([A-Za-z0-9]+)/i
+      );
+      if (match) {
+        return {
+          type: match[1].toLowerCase() as "track" | "playlist" | "album",
+          id: match[2],
+        };
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
   }
 
   function handlePastedText(text: string) {
-    if (isValidSpotifyURL(text)) {
-      onPaste(getSpotifyResource(text));
+    const resource = parseSpotifyURL(text);
+    if (resource) {
+      onPaste(resource);
       setSearchInput(text);
     }
   }
@@ -90,7 +112,15 @@ export function SearchBar({
     } else if (hasResults) {
       handleClearClick();
     } else {
-      onSearch(searchInput.trim());
+      const trimmed = searchInput.trim();
+      if (!trimmed) return;
+
+      const resource = parseSpotifyURL(trimmed);
+      if (resource) {
+        onPaste(resource);
+      } else {
+        onSearch(trimmed);
+      }
     }
   }
 
@@ -105,6 +135,12 @@ export function SearchBar({
           disabled={isLoading || disabled || isDownloading}
           onChange={(e) => {
             setSearchInput(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !isLoading && !disabled && !isDownloading) {
+              e.preventDefault();
+              handleButtonClick();
+            }
           }}
           onPaste={(e) => {
             const text = e.clipboardData.getData("text");
