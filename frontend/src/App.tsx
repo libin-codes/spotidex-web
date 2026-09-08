@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ThemeProvider } from "./contexts/theme-provider";
 import { SearchBar } from "./components/SearchBar/SearchBar";
 import { TrackCard } from "./components/TrackCard/TrackCard";
@@ -12,19 +12,73 @@ import type { SpotifyResource } from "./components/types";
 
 function App() {
   const [resource, setResource] = useState<SpotifyResource | null>(null);
+  const [lastSearch, setLastSearch] = useState<{
+    type: "search";
+    query: string;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePaste = (res: SpotifyResource) => {
     setResource(res);
+    setLastSearch(null);
+    window.history.pushState({ resource: res }, "");
   };
 
   const handleSearch = (query: string) => {
-    setResource({ type: "search", query });
+    const searchRes = { type: "search" as const, query };
+    setResource(searchRes);
+    setLastSearch(searchRes);
+    window.history.pushState({ resource: searchRes }, "");
   };
+
+  const handleSelect = (selected: SpotifyResource) => {
+    setResource(selected);
+    window.history.pushState(
+      {
+        resource: selected,
+        fromSearch: true,
+        lastSearchQuery: lastSearch?.query,
+      },
+      ""
+    );
+  };
+
+  const handleBack = useCallback(() => {
+    if (window.history.state?.fromSearch) {
+      window.history.back();
+    } else if (lastSearch) {
+      setResource(lastSearch);
+      window.history.pushState({ resource: lastSearch }, "");
+    }
+  }, [lastSearch]);
 
   const handleClear = () => {
     setResource(null);
+    setLastSearch(null);
+    window.history.pushState(null, "");
   };
+
+  // Sync state with browser/mobile back and forward navigation
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      const stateResource = e.state?.resource as SpotifyResource | undefined;
+      setResource(stateResource ?? null);
+
+      if (stateResource?.type === "search") {
+        setLastSearch(stateResource);
+      } else if (e.state?.fromSearch && e.state?.lastSearchQuery) {
+        setLastSearch({ type: "search", query: e.state.lastSearchQuery });
+      } else if (!stateResource) {
+        setLastSearch(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const canGoBack =
+    resource != null && resource.type !== "search" && lastSearch != null;
 
   return (
     <ThemeProvider>
@@ -55,7 +109,7 @@ function App() {
           {resource?.type === "search" && (
             <SearchResultsCard
               query={resource.query}
-              onSelect={(selected) => setResource(selected)}
+              onSelect={handleSelect}
               onLoadingChange={setIsLoading}
             />
           )}
@@ -64,6 +118,13 @@ function App() {
           onPaste={handlePaste}
           onSearch={handleSearch}
           onClear={handleClear}
+          canGoBack={canGoBack}
+          onBack={handleBack}
+          activeQuery={
+            resource?.type === "search"
+              ? resource.query
+              : lastSearch?.query
+          }
           hasResults={resource != null}
           isLoading={isLoading}
           disabled={resource != null}

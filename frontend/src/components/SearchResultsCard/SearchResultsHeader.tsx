@@ -1,4 +1,3 @@
-import { Search } from "lucide-react";
 import { CardHeader, CardTitle } from "../ui/card";
 import { TabsList, TabsTrigger } from "../ui/tabs";
 import { Badge } from "../ui/badge";
@@ -19,11 +18,13 @@ export function SearchResultsHeader({
   return (
     <CardHeader className="sticky top-0 z-10 flex flex-col p-0 pt-4 w-full">
       <div className="px-4 pb-2 flex w-full items-center justify-between">
-        <div className="flex gap-2 items-center">
-          <Search size={18} className="text-muted-foreground" />
-          <CardTitle>Search Results</CardTitle>
+        <div className="flex gap-2 items-center justify-center">
+  
+            
+            <CardTitle>Search Results</CardTitle>
+         
         </div>
-        <Badge variant="secondary" className=" text-xs">
+        <Badge variant="secondary" className="text-xs">
           {totalCount} {totalCount === 1 ? "result" : "results"}
         </Badge>
       </div>

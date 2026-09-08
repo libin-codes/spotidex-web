@@ -1,5 +1,5 @@
-import {useState } from "react";
-import {Loader, Search, X } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Loader, Search, X } from "lucide-react";
 import { Field } from "../ui/field";
 import {
   InputGroup,
@@ -13,6 +13,9 @@ type SearchBarProps = {
   onPaste: (resource: SpotifyResource) => void;
   onSearch: (query: string) => void;
   onClear: () => void;
+  canGoBack?: boolean;
+  onBack?: () => void;
+  activeQuery?: string;
   hasResults: boolean;
   isLoading: boolean;
   disabled: boolean;
@@ -22,11 +25,27 @@ export function SearchBar({
   onPaste,
   onSearch,
   onClear,
+  canGoBack = false,
+  onBack,
+  activeQuery,
   hasResults,
   isLoading,
   disabled,
 }: SearchBarProps) {
-  const [searchInput, setSearchInput] = useState("");
+  const [prevActiveQuery, setPrevActiveQuery] = useState(activeQuery);
+  const [prevHasResults, setPrevHasResults] = useState(hasResults);
+  const [searchInput, setSearchInput] = useState(activeQuery ?? "");
+
+  // Sync input when activeQuery or hasResults changes externally
+  if (activeQuery !== prevActiveQuery || hasResults !== prevHasResults) {
+    setPrevActiveQuery(activeQuery);
+    setPrevHasResults(hasResults);
+    if (activeQuery !== undefined) {
+      setSearchInput(activeQuery);
+    } else if (!hasResults) {
+      setSearchInput("");
+    }
+  }
 
   function isValidSpotifyURL(url: string): boolean {
     return (
@@ -58,10 +77,16 @@ export function SearchBar({
     }
   }
 
+  function handleClearClick() {
+    setSearchInput("");
+    onClear();
+  }
+
   function handleButtonClick() {
-    if (hasResults) {
-      setSearchInput("");
-      onClear();
+    if (canGoBack) {
+      onBack?.();
+    } else if (hasResults) {
+      handleClearClick();
     } else {
       onSearch(searchInput.trim());
     }
@@ -69,7 +94,7 @@ export function SearchBar({
 
   return (
     <Field className="pb-3 px-3">
-      <InputGroup  className="h-14 rounded-full">
+      <InputGroup className="h-14 rounded-full border-accent border-2">
         <InputGroupInput
           className="pl-5 text-md disabled:opacity-80"
           type="search"
@@ -81,42 +106,60 @@ export function SearchBar({
           }}
           onPaste={(e) => {
             const text = e.clipboardData.getData("text");
-            if (text)  handlePastedText(text);
+            if (text) handlePastedText(text);
           }}
         />
-        <InputGroupAddon align="inline-end">
+        <InputGroupAddon align="inline-end" className="">
+          {canGoBack && !isLoading && (
+            <InputGroupButton
+              size="icon-xs"
+              variant="ghost"
+              title="Clear search"
+              onClick={handleClearClick}
+              className="text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="size-3.5" />
+            </InputGroupButton>
+          )}
+
           <InputGroupButton
             size="sm"
             className="w-24"
             variant={
               isLoading
                 ? "secondary"
-                : searchInput === ""
-                  ? "default"
-                  : hasResults
-                    ? "destructive"
-                    : "default"
+                : canGoBack
+                  ? "secondary"
+                  : searchInput === ""
+                    ? "default"
+                    : hasResults
+                      ? "destructive"
+                      : "default"
             }
-            disabled={isLoading || searchInput===""}
-            onClick={()=>{
-              handleButtonClick()
-           
-            }}
+            disabled={
+              isLoading || (!hasResults && !canGoBack && searchInput === "")
+            }
+            onClick={handleButtonClick}
           >
-       
             {isLoading && (
               <>
                 <Loader className="animate-spin" />
                 Loading
               </>
             )}
-            {searchInput !== "" && hasResults && !isLoading && (
+            {!isLoading && canGoBack && (
+              <>
+                <ArrowLeft />
+                Back
+              </>
+            )}
+            {!isLoading && !canGoBack && hasResults && (
               <>
                 <X />
                 Clear
               </>
             )}
-            {!hasResults && !isLoading && (
+            {!isLoading && !canGoBack && !hasResults && (
               <>
                 <Search />
                 Search
