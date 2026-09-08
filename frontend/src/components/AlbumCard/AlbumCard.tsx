@@ -6,9 +6,14 @@ import { useEffect } from "react";
 type AlbumCardProps = {
   albumId: string;
   onLoadingChange?: (isLoading: boolean) => void;
+  onDownloadingChange?: (isDownloading: boolean) => void;
 };
 
-export function AlbumCard({ albumId, onLoadingChange }: AlbumCardProps) {
+export function AlbumCard({
+  albumId,
+  onLoadingChange,
+  onDownloadingChange,
+}: AlbumCardProps) {
   const { data: album, isLoading } = useAlbum(albumId);
 
   useEffect(() => {
@@ -24,6 +29,10 @@ export function AlbumCard({ albumId, onLoadingChange }: AlbumCardProps) {
   }
 
   return (
-    <AlbumCardContent album={album} key={albumId}/>
+    <AlbumCardContent
+      album={album}
+      key={albumId}
+      onDownloadingChange={onDownloadingChange}
+    />
   );
 }

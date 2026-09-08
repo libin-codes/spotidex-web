@@ -6,9 +6,14 @@ import { useEffect } from "react";
 type PlaylistCardProps = {
   playlistId: string;
   onLoadingChange?: (isLoading: boolean) => void;
+  onDownloadingChange?: (isDownloading: boolean) => void;
 };
 
-export function PlaylistCard({ playlistId, onLoadingChange }: PlaylistCardProps) {
+export function PlaylistCard({
+  playlistId,
+  onLoadingChange,
+  onDownloadingChange,
+}: PlaylistCardProps) {
   const { data: playlist, isLoading } = usePlaylist(playlistId);
 
   useEffect(() => {
@@ -23,5 +28,11 @@ export function PlaylistCard({ playlistId, onLoadingChange }: PlaylistCardProps)
     return "Failed to load playlist.";
   }
 
-  return <PlaylistCardContent playlist={playlist} key={playlistId} />;
+  return (
+    <PlaylistCardContent
+      playlist={playlist}
+      key={playlistId}
+      onDownloadingChange={onDownloadingChange}
+    />
+  );
 }

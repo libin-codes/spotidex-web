@@ -1,6 +1,6 @@
 import { useDownload } from "@/hooks/use-download";
 import { useTrackSelection } from "@/hooks/use-track-selection";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { Card } from "../ui/card";
 import TrackContainerHeader from "../TrackContainer/TrackContainerHeader";
 import TrackItemList from "../TrackContainer/TrackItemList";
@@ -9,13 +9,22 @@ import type { AlbumModel } from "@/api/types";
 
 export default function AlbumCardContent({
   album,
+  onDownloadingChange,
 }: {
   album: AlbumModel;
+  onDownloadingChange?: (isDownloading: boolean) => void;
 }) {
   const { selectedIds, selectedCount, isAllSelected, toggle, toggleAll } =
     useTrackSelection(album.tracks.map((t) => t.spotify_id));
 
-  const { job, downloadAlbum } = useDownload();
+  const { job, downloadAlbum, isPending } = useDownload();
+
+  const isDownloading =
+    isPending || job?.status === "downloading" || job?.status === "pending";
+
+  useEffect(() => {
+    onDownloadingChange?.(isDownloading);
+  }, [isDownloading, onDownloadingChange]);
 
   const handleDownload = useCallback(() => {
     const selectedTracks = album.tracks.filter((t) =>

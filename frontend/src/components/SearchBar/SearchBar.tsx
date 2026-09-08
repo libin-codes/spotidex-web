@@ -18,6 +18,7 @@ type SearchBarProps = {
   activeQuery?: string;
   hasResults: boolean;
   isLoading: boolean;
+  isDownloading?: boolean;
   disabled: boolean;
 };
 
@@ -30,6 +31,7 @@ export function SearchBar({
   activeQuery,
   hasResults,
   isLoading,
+  isDownloading = false,
   disabled,
 }: SearchBarProps) {
   const [prevActiveQuery, setPrevActiveQuery] = useState(activeQuery);
@@ -100,7 +102,7 @@ export function SearchBar({
           type="search"
           placeholder="Search or Paste to Begin"
           value={searchInput}
-          disabled={isLoading || disabled}
+          disabled={isLoading || disabled || isDownloading}
           onChange={(e) => {
             setSearchInput(e.target.value);
           }}
@@ -116,6 +118,7 @@ export function SearchBar({
               variant="ghost"
               title="Clear search"
               onClick={handleClearClick}
+              disabled={isDownloading}
               className="text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <X className="size-3.5" />
@@ -137,7 +140,9 @@ export function SearchBar({
                       : "default"
             }
             disabled={
-              isLoading || (!hasResults && !canGoBack && searchInput === "")
+              isLoading ||
+              isDownloading ||
+              (!hasResults && !canGoBack && searchInput === "")
             }
             onClick={handleButtonClick}
           >

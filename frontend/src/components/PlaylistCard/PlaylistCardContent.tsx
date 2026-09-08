@@ -1,19 +1,30 @@
 import { useDownload } from "@/hooks/use-download";
 import { useTrackSelection } from "@/hooks/use-track-selection";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { Card } from "../ui/card";
 import TrackContainerHeader from "../TrackContainer/TrackContainerHeader";
 import TrackItemList from "../TrackContainer/TrackItemList";
 import TrackContainerFooter from "../TrackContainer/TrackContainerFooter";
 import type { PlaylistModel } from "@/api/types";
 
-
-
-export default function PlaylistCardContent({ playlist }: { playlist: PlaylistModel }) {
+export default function PlaylistCardContent({
+  playlist,
+  onDownloadingChange,
+}: {
+  playlist: PlaylistModel;
+  onDownloadingChange?: (isDownloading: boolean) => void;
+}) {
   const { selectedIds, selectedCount, isAllSelected, toggle, toggleAll } =
     useTrackSelection(playlist.tracks.map((t) => t.spotify_id));
 
-  const { job, downloadPlaylist } = useDownload();
+  const { job, downloadPlaylist, isPending } = useDownload();
+
+  const isDownloading =
+    isPending || job?.status === "downloading" || job?.status === "pending";
+
+  useEffect(() => {
+    onDownloadingChange?.(isDownloading);
+  }, [isDownloading, onDownloadingChange]);
 
   const handleDownload = useCallback(() => {
     const selectedTracks = playlist.tracks.filter((t) =>

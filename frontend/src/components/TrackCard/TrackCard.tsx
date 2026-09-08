@@ -17,11 +17,23 @@ import { useEffect } from "react";
 type TrackCardProps = {
   trackId: string;
   onLoadingChange?: (isLoading: boolean) => void;
+  onDownloadingChange?: (isDownloading: boolean) => void;
 };
 
-export function TrackCard({ trackId, onLoadingChange }: TrackCardProps) {
+export function TrackCard({
+  trackId,
+  onLoadingChange,
+  onDownloadingChange,
+}: TrackCardProps) {
   const { data: track, isLoading } = useTrack(trackId);
-  const {download, job} = useDownload()
+  const { download, job, isPending } = useDownload();
+
+  const isDownloading =
+    isPending || job?.status === "downloading" || job?.status === "pending";
+
+  useEffect(() => {
+    onDownloadingChange?.(isDownloading);
+  }, [isDownloading, onDownloadingChange]);
 
   useEffect(() => {
     onLoadingChange?.(isLoading);

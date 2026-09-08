@@ -18,9 +18,12 @@ function App() {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const handlePaste = (res: SpotifyResource) => {
     setResource(res);
     setLastSearch(null);
+    setIsDownloading(false);
     window.history.pushState({ resource: res }, "");
   };
 
@@ -28,11 +31,13 @@ function App() {
     const searchRes = { type: "search" as const, query };
     setResource(searchRes);
     setLastSearch(searchRes);
+    setIsDownloading(false);
     window.history.pushState({ resource: searchRes }, "");
   };
 
   const handleSelect = (selected: SpotifyResource) => {
     setResource(selected);
+    setIsDownloading(false);
     window.history.pushState(
       {
         resource: selected,
@@ -44,6 +49,7 @@ function App() {
   };
 
   const handleBack = useCallback(() => {
+    setIsDownloading(false);
     if (window.history.state?.fromSearch) {
       window.history.back();
     } else if (lastSearch) {
@@ -55,6 +61,7 @@ function App() {
   const handleClear = () => {
     setResource(null);
     setLastSearch(null);
+    setIsDownloading(false);
     window.history.pushState(null, "");
   };
 
@@ -63,6 +70,7 @@ function App() {
     const handlePopState = (e: PopStateEvent) => {
       const stateResource = e.state?.resource as SpotifyResource | undefined;
       setResource(stateResource ?? null);
+      setIsDownloading(false);
 
       if (stateResource?.type === "search") {
         setLastSearch(stateResource);
@@ -92,18 +100,21 @@ function App() {
             <TrackCard
               trackId={resource.id}
               onLoadingChange={setIsLoading}
+              onDownloadingChange={setIsDownloading}
             />
           )}
           {resource?.type === "playlist" && (
             <PlaylistCard
               playlistId={resource.id}
               onLoadingChange={setIsLoading}
+              onDownloadingChange={setIsDownloading}
             />
           )}
           {resource?.type === "album" && (
             <AlbumCard
               albumId={resource.id}
               onLoadingChange={setIsLoading}
+              onDownloadingChange={setIsDownloading}
             />
           )}
           {resource?.type === "search" && (
@@ -127,6 +138,7 @@ function App() {
           }
           hasResults={resource != null}
           isLoading={isLoading}
+          isDownloading={isDownloading}
           disabled={resource != null}
         />
       </div>
