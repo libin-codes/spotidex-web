@@ -1,20 +1,22 @@
 import { useEffect } from "react";
 import { Card, CardContent } from "../ui/card";
-import { Tabs, TabsContent } from "../ui/tabs";
+import { Tabs } from "../ui/tabs";
 import type { SpotifyResource } from "../types";
 import { useSearch } from "@/hooks/use-search";
+import { useSwipeTabs } from "@/hooks/use-swipe-tabs";
 import { SearchResultsCardSkeleton } from "./SearchResultsCardSkeleton";
 import { SearchResultsHeader } from "./SearchResultsHeader";
-import { TrackResultItem } from "./TrackResultItem";
-import { PlaylistResultItem } from "./PlaylistResultItem";
-import { AlbumResultItem } from "./AlbumResultItem";
-import { EmptyResult } from "./EmptyResult";
+import { TracksPanel } from "./panels/TracksPanel";
+import { PlaylistsPanel } from "./panels/PlaylistsPanel";
+import { AlbumsPanel } from "./panels/AlbumsPanel";
 
 type SearchResultsCardProps = {
   query: string;
   onSelect: (resource: SpotifyResource) => void;
   onLoadingChange?: (isLoading: boolean) => void;
 };
+
+const TABS = ["tracks", "playlists", "albums"] as const;
 
 export default function SearchResultsCard({
   query,
@@ -26,6 +28,12 @@ export default function SearchResultsCard({
     isLoading,
   } = useSearch(query);
 
+  const { activeTab, handleTabChange, containerRef, containerProps } =
+    useSwipeTabs({
+      tabs: TABS,
+      defaultTab: "tracks",
+    });
+
   useEffect(() => {
     onLoadingChange?.(isLoading);
   }, [isLoading, onLoadingChange]);
@@ -34,62 +42,40 @@ export default function SearchResultsCard({
     return <SearchResultsCardSkeleton />;
   }
 
+  const tracksCount = results.tracks.length;
+  const playlistsCount = results.playlists.length;
+  const albumsCount = results.albums.length;
+  const totalCount = tracksCount + playlistsCount + albumsCount;
+
   return (
     <Card className="w-full h-full min-h-0 no-scrollbar p-0 gap-0" size="sm">
-      <Tabs defaultValue="tracks" className="h-full gap-0">
-        <SearchResultsHeader />
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="h-full gap-0"
+      >
+        <SearchResultsHeader
+          totalCount={totalCount}
+          tracksCount={tracksCount}
+          playlistsCount={playlistsCount}
+          albumsCount={albumsCount}
+        />
 
-        <CardContent className="flex-1 h-full p-0 min-h-0">
-          <TabsContent value="tracks" className="h-full">
-            <div className="flex flex-col gap-0 h-full overflow-y-auto">
-              {results.tracks.map((track) => (
-                <TrackResultItem
-                  key={track.spotify_id}
-                  track={track}
-                  onClick={() =>
-                    onSelect({ type: "track", id: track.spotify_id })
-                  }
-                />
-              ))}
-              {results.tracks.length === 0 && (
-                <EmptyResult message="No tracks found" />
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="playlists" className="h-full">
-            <div className="flex flex-col gap-0 h-full overflow-y-auto">
-              {results.playlists.map((playlist) => (
-                <PlaylistResultItem
-                  key={playlist.spotify_id}
-                  playlist={playlist}
-                  onClick={() =>
-                    onSelect({ type: "playlist", id: playlist.spotify_id })
-                  }
-                />
-              ))}
-              {results.playlists.length === 0 && (
-                <EmptyResult message="No playlists found" />
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="albums" className="h-full">
-            <div className="flex flex-col gap-0 h-full overflow-y-auto">
-              {results.albums.map((album) => (
-                <AlbumResultItem
-                  key={album.spotify_id}
-                  album={album}
-                  onClick={() =>
-                    onSelect({ type: "album", id: album.spotify_id })
-                  }
-                />
-              ))}
-              {results.albums.length === 0 && (
-                <EmptyResult message="No albums found" />
-              )}
-            </div>
-          </TabsContent>
+        <CardContent className="flex-1 h-full p-0 min-h-0 overflow-hidden">
+          <div
+            ref={containerRef}
+            {...containerProps}
+            className="flex w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory no-scrollbar"
+            style={{
+              scrollSnapType: "x mandatory",
+              overscrollBehaviorX: "contain",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            <TracksPanel tracks={results.tracks} onSelect={onSelect} />
+            <PlaylistsPanel playlists={results.playlists} onSelect={onSelect} />
+            <AlbumsPanel albums={results.albums} onSelect={onSelect} />
+          </div>
         </CardContent>
       </Tabs>
     </Card>

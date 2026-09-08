@@ -6,7 +6,7 @@ import {
   ItemMedia,
   ItemSeparator,
   ItemTitle,
-} from "../ui/item";
+} from "@/components/ui/item";
 import { getTrackDurationString } from "@/lib/utils";
 
 type TrackResultItemProps = {
@@ -36,7 +36,7 @@ export function TrackResultItem({ track, onClick }: TrackResultItemProps) {
           {getTrackDurationString(track.duration_seconds)}
         </ItemContent>
       </Item>
-      <ItemSeparator className={"m-0"}/>
+      <ItemSeparator className={"m-0"} />
     </>
   );
 }

@@ -6,7 +6,7 @@ import {
   ItemMedia,
   ItemSeparator,
   ItemTitle,
-} from "../ui/item";
+} from "@/components/ui/item";
 import { ChevronRight } from "lucide-react";
 
 type PlaylistResultItemProps = {
