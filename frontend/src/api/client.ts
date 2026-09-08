@@ -1,6 +1,6 @@
 import type { TrackModel, PlaylistModel, AlbumModel, DownloadResponse, SearchResults } from "./types";
 
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
 export async function fetchTrack(trackId: string): Promise<TrackModel> {
   const res = await fetch(`${API_BASE}/track/${trackId}`);
