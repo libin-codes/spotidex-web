@@ -4,7 +4,6 @@ import {
   ItemContent,
   ItemDescription,
   ItemMedia,
-  ItemSeparator,
   ItemTitle,
 } from "@/components/ui/item";
 import { getTrackDurationString } from "@/lib/utils";
@@ -19,7 +18,7 @@ export function TrackResultItem({ track, onClick }: TrackResultItemProps) {
     <>
       <Item
         variant="outline"
-        className="border-0 py-3 pb-4 pt-3 rounded-none cursor-pointer flex-nowrap"
+        className="border-0 py-3 pb-4 pt-3 rounded-none cursor-pointer flex-nowrap border-b"
         render={<button type="button" />}
         onClick={onClick}
       >
@@ -36,7 +35,7 @@ export function TrackResultItem({ track, onClick }: TrackResultItemProps) {
           {getTrackDurationString(track.duration_seconds)}
         </ItemContent>
       </Item>
-      <ItemSeparator className={"m-0"} />
+     
     </>
   );
 }

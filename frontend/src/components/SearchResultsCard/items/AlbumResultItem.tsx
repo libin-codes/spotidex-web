@@ -4,7 +4,6 @@ import {
   ItemContent,
   ItemDescription,
   ItemMedia,
-  ItemSeparator,
   ItemTitle,
 } from "@/components/ui/item";
 import { ChevronRight } from "lucide-react";
@@ -20,7 +19,7 @@ export function AlbumResultItem({ album, onClick }: AlbumResultItemProps) {
       <Item
         key={album.spotify_id}
         variant="outline"
-        className="border-0 py-3 pb-4 pt-3 rounded-none cursor-pointer flex-nowrap"
+        className="border-0 py-3 pb-4 pt-3 rounded-none cursor-pointer flex-nowrap border-b"
         render={<button type="button" />}
         onClick={onClick}
       >
@@ -47,7 +46,6 @@ export function AlbumResultItem({ album, onClick }: AlbumResultItemProps) {
           <ChevronRight className="size-4 text-muted-foreground/60 shrink-0" />
         </ItemContent>
       </Item>
-      <ItemSeparator className={"m-0"} />
     </>
   );
 }
