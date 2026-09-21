@@ -72,6 +72,12 @@ spotidex-web/
 
 ### Prerequisites
 
+1. **Spotify Developer Credentials**:
+   - Create an application on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+   - Obtain your **Client ID** and **Client Secret**.
+
+For the non-Docker workflow you additionally need:
+
 1. **Python 3.14+** with [`uv`](https://docs.astral.sh/uv/getting-started/installation/) installed.
 2. **Node.js** (v20+) with `npm` or `pnpm`.
 3. **FFmpeg** installed on your system (required by `yt-dlp` for audio extraction):
@@ -85,9 +91,8 @@ spotidex-web/
    # Arch Linux
    sudo pacman -S ffmpeg
    ```
-4. **Spotify Developer Credentials**:
-   - Create an application on the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
-   - Obtain your **Client ID** and **Client Secret**.
+
+> **Tip:** If you use [Docker](#docker-development), skip the above extras — the containers bundle Python, Node, and FFmpeg for you.
 
 ---
 
@@ -136,6 +141,46 @@ The backend will be running at `http://127.0.0.1:8000`. You can explore the inte
    ```
 
 The frontend will be running at `http://localhost:5173`. Requests to `/api/*` are automatically proxied to the backend at `http://localhost:8000`.
+
+---
+
+## Docker (Development)
+
+Run the entire stack (backend + frontend) with hot reload via [Docker Compose](https://docs.docker.com/compose/). The containers bundle Python, Node, and FFmpeg, so no local toolchain is required.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/engine/install/) with Docker Compose (built into Docker Desktop / Docker Engine 27+).
+- A `backend/.env` file with your Spotify credentials (see [Backend Setup](#backend-setup)).
+
+### Usage
+
+```bash
+# Build and start in the foreground
+docker compose up --build
+
+# Or start detached
+docker compose up -d --build
+
+# Stream backend logs
+docker compose logs -f backend
+
+# Stop and remove containers
+docker compose down
+```
+
+Once running:
+
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+
+### How it works
+
+- **Credentials** are read automatically from `backend/.env` via `env_file` — no rebuild needed to update them.
+- **Hot reload**: backend and frontend source directories are bind-mounted into their containers, so edits apply immediately (backend watched by `uvicorn --reload`, frontend by Vite HMR).
+- **FFmpeg** is preinstalled in the backend image, so MP3 conversion works out of the box.
+- The Vite dev server proxies `/api/*` (including WebSockets) to the `backend` service inside the Compose network.
 
 ---
 
